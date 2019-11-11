@@ -9,7 +9,7 @@ return [
     'class' => 'humhub\modules\sso\jwt\Module',
     'namespace' => 'humhub\modules\sso\jwt',
     'events' => [
-        [AuthController::class => AuthController::EVENT_BEFORE_ACTION, 'callback' => ['humhub\modules\ssom\jwt\Module', 'onAuthClientCollectionInit']],
+        [AuthController::class, AuthController::EVENT_BEFORE_ACTION, ['humhub\modules\sso\jwt\Module', 'onAuthClientCollectionInit']],
     ]
 ];
 ?>

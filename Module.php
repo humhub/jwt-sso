@@ -7,10 +7,40 @@
 
 namespace humhub\modules\sso\jwt;
 
+use humhub\components\Event;
 use Yii;
 use yii\helpers\Url;
 
 class Module extends \humhub\components\Module
 {
     public $resourcesPath = 'resources';
+
+    /**
+     * JWT Handling on login page
+     *
+     * @param Event $event
+     * @return void
+     * @throws \yii\base\InvalidConfigException
+     * @since 1.1
+     */
+    public static function onAuthClientCollectionInit($event)
+    {
+        if (!Yii::$app->user->isGuest) {
+            return;
+        }
+
+        if (Yii::$app->authClientCollection->hasClient('jwt')) {
+            $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
+
+            if ($jwtAuth->checkIPAccess()) {
+                if ($jwtAuth->autoLogin && $event->action->id == 'login') {
+                    $event->isValid = false;
+                    return $jwtAuth->redirectToBroker();
+                }
+            } else {
+                // Not allowed, remove authClient
+                Yii::$app->authClientCollection->removeClient('jwt');
+            }
+        }
+    }
 }
