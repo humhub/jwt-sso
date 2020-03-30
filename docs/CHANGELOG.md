@@ -1,6 +1,12 @@
 Changelog
 =========
 
+
+1.0.1 (March 30, 2020)
+-------------------------
+- Enh: Documentation updates
+
+
 1.0.0 (November 6, 2019)
 -------------------------
 - Enh: Initial commit of standalone version
