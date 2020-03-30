@@ -1,8 +1,8 @@
 # JWT SSO
 
-This module provides a single sign on mechanism to automatically log in your users by JSON Web Tokens (JWT Token).
+With the JWT SSO module, users can be automatically registered and logged into the HumHub installation using a JWT token.
 
-More information about JWT can be found here:
+JSON Web Token (JWT) is an open standard ([RFC 7519](https://tools.ietf.org/html/rfc7519)) that defines a compact and self-contained way for securely transmitting information (like user profile and login data) between parties (HumHub and another application) as a JSON object. 
 
-- https://jwt.io/
-- [RFC 7519](https://tools.ietf.org/html/rfc7519)
+This module is only the HumHub component of an SSO process. An additional application is required which provides the login data in the form of a JWT token.
+
