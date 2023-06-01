@@ -7,10 +7,10 @@
     "sso",
     "login"
   ],
-  "version": "1.0.1",
+  "version": "1.1.0",
   "humhub": {
-    "minVersion": "1.4"
+    "minVersion": "1.14"
   },
-  "homepage": "https://github.com/humhub/humhub-modules-jwt-sso",
+  "homepage": "https://github.com/humhub/jwt-sso-issues",
   "screenshots": []
 }
