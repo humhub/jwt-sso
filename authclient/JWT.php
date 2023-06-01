@@ -9,6 +9,7 @@
 namespace humhub\modules\sso\jwt\authclient;
 
 use humhub\modules\user\authclient\BaseClient;
+use humhub\modules\user\services\AuthClientUserService;
 use Yii;
 use humhub\modules\user\authclient\interfaces\StandaloneAuthClient;
 use humhub\modules\user\models\User;
@@ -159,7 +160,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
         $attributes = $this->getUserAttributes();
         $user = User::findOne(['email' => $attributes['email']]);
         if ($user !== null) {
-            \humhub\modules\user\authclient\AuthClientHelpers::storeAuthClientForUser($this, $user);
+            (new AuthClientUserService($user))->add($this);
         }
     }
 
