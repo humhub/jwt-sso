@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.1.0 (Unreleased)
----------------------
+1.1.0 (June 1, 2023)
+--------------------
 - Enh: Changed since v1.14 deprecated method 'AuthClientHelpers'
 - Enh: Added option to bypass forced JWT login
 
