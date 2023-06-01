@@ -33,7 +33,7 @@ class Module extends \humhub\components\Module
             $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
 
             if ($jwtAuth->checkIPAccess()) {
-                if ($jwtAuth->autoLogin && $event->action->id == 'login') {
+                if ($jwtAuth->autoLogin && $event->action->id == 'login' && empty(Yii::$app->request->get('noJwt'))) {
                     $event->isValid = false;
                     return $jwtAuth->redirectToBroker();
                 }
