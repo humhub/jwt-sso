@@ -1,16 +1,23 @@
 Changelog
 =========
 
+1.1.1 (June 14, 2023)
+--------------------
+
+- Enh: Added `JWTPrimary` AuthClient for auto synced users
+
 1.1.0 (June 1, 2023)
 --------------------
+
 - Enh: Changed since v1.14 deprecated method 'AuthClientHelpers'
 - Enh: Added option to bypass forced JWT login
 
 1.0.1 (March 30, 2020)
 -------------------------
-- Enh: Documentation updates
 
+- Enh: Documentation updates
 
 1.0.0 (November 6, 2019)
 -------------------------
+
 - Enh: Initial commit of standalone version
