@@ -22,7 +22,7 @@ use yii\helpers\Url;
             </br>
             <?= $form->field($model, 'url'); ?>
             <?= $form->field($model, 'sharedKey'); ?>
-            <?= $form->field($model, 'supportedAlgorithms')->radioList($model->getAlgorithms(true)); ?>
+            <?= $form->field($model, 'supportedAlgorithms')->dropDownList($model->getAlgorithms(true)); ?>
             <?= $form->field($model, 'idAttribute'); ?>
             <?= $form->field($model, 'leeway'); ?>
             <?= $form->field($model, 'allowedIPs'); ?>
