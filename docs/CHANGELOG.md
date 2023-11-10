@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.1.2 (TBA)
+--------------------
+
+- Enh: Configuration Settings
+
 1.1.1 (June 14, 2023)
 --------------------
 

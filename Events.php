@@ -8,8 +8,6 @@
 
 namespace humhub\modules\sso\jwt;
 
-
-use humhub\modules\sso\jwt\authclient\JWT;
 use Yii;
 
 class Events

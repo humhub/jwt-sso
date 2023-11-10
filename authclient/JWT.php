@@ -13,6 +13,7 @@ use humhub\modules\user\services\AuthClientUserService;
 use Yii;
 use humhub\modules\user\authclient\interfaces\StandaloneAuthClient;
 use humhub\modules\user\models\User;
+use humhub\modules\sso\jwt\models\Configuration;
 
 /**
  * JWT Authclient
@@ -23,45 +24,55 @@ class JWT extends BaseClient implements StandaloneAuthClient
     /**
      * @var string url of the JWT provider
      */
-    public $url = '';
+    public $url;
 
     /**
      * @var string shared key
      */
-    public $sharedKey = '';
+    public $sharedKey;
 
     /**
      * @var array a list of supported jwt verification algorithms Supported algorithms are 'HS256', 'HS384', 'HS512' and 'RS256'
      */
-    public $supportedAlgorithms = ['HS256'];
+    public $supportedAlgorithms;
 
     /**
      * @var string attribute to match user tables with (email, username, id, guid)
      */
-    public $idAttribute = 'email';
+    public $idAttribute;
 
     /**
      * @var int token time leeway
      */
-    public $leeway = 60;
+    public $leeway;
 
     /**
      * @var array the list of IPs that are allowed to use JWT.
      * Each array element represents a single IP filter which can be either an IP address
      * or an address with wildcard (e.g. 192.168.0.*) to represent a network segment.
      */
-    public $allowedIPs = [];
+    public $allowedIPs;
 
     /**
      * @var boolean enable automatic login of 'allowed ips'.
      */
-    public $autoLogin = false;
+    public $autoLogin;
 
     /**
      * @inheritdoc
      */
     public function init()
     {
+        $config = Configuration::getInstance();
+
+        $this->url = $config->url . '';
+        $this->sharedKey = $config->sharedKey . '';
+        $this->supportedAlgorithms = $config->supportedAlgorithms . '';
+        $this->idAttribute = $config->idAttribute . '';
+        $this->leeway = $config->leeway . '';
+        $this->allowedIPs = $config->idAttribute . '';
+        $this->autoLogin = $config->autoLogin . '';
+
         parent::init();
         Yii::setAlias('@Firebase/JWT', '@jwt-sso/vendors/php-jwt/src');
     }

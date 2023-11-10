@@ -7,6 +7,7 @@
 
 namespace humhub\modules\sso\jwt;
 
+use humhub\modules\sso\jwt\models\Configuration;
 use humhub\components\Event;
 use Yii;
 use yii\helpers\Url;
@@ -14,6 +15,25 @@ use yii\helpers\Url;
 class Module extends \humhub\components\Module
 {
     public $resourcesPath = 'resources';
+
+    /**
+     * @inheritdoc
+     */
+    public function getConfigUrl()
+    {
+        return Url::to(['/jwt-sso/admin/index']);
+    }
+
+    private ?Configuration $configuration = null;
+
+    public function getConfiguration(): Configuration
+    {
+        if ($this->configuration === null) {
+            $this->configuration = new Configuration(['settingsManager' => $this->settings]);
+            $this->configuration->loadBySettings();
+        }
+        return $this->configuration;
+    }
 
     /**
      * JWT Handling on login page
