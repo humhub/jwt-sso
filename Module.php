@@ -49,6 +49,21 @@ class Module extends \humhub\components\Module
             return;
         }
 
+        /** @var Collection $authClientCollection */
+        $authClientCollection = $event->sender;
+
+        if (!empty(Configuration::getInstance()->enabled)) {
+            $authClientCollection->setClient('jwt', [
+                'class' => authclient\JWT::class,
+                'url' => Configuration::getInstance()->url,
+                'sharedKey' => Configuration::getInstance()->sharedKey,
+                'supportedAlgorithms' => Configuration::getInstance()->supportedAlgorithms,
+                'idAttribute' => Configuration::getInstance()->idAttribute,
+                'leeway' => Configuration::getInstance()->leeway,
+                'allowedIPs' => Configuration::getInstance()->allowedIPs
+            ]);
+        }
+
         if (Yii::$app->authClientCollection->hasClient('jwt')) {
             $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
 
