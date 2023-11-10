@@ -65,13 +65,13 @@ class JWT extends BaseClient implements StandaloneAuthClient
     {
         $config = Configuration::getInstance();
 
-        $this->url = $config->url . '';
-        $this->sharedKey = $config->sharedKey . '';
-        $this->supportedAlgorithms = $config->supportedAlgorithms . '';
-        $this->idAttribute = $config->idAttribute . '';
-        $this->leeway = $config->leeway . '';
-        $this->allowedIPs = $config->idAttribute . '';
-        $this->autoLogin = $config->autoLogin . '';
+        $this->url = $config->url;
+        $this->sharedKey = $config->sharedKey;
+        $this->supportedAlgorithms = $config->supportedAlgorithms;
+        $this->idAttribute = $config->idAttribute;
+        $this->leeway = $config->leeway;
+        $this->allowedIPs = $config->idAttribute;
+        $this->autoLogin = $config->autoLogin;
 
         parent::init();
         Yii::setAlias('@Firebase/JWT', '@jwt-sso/vendors/php-jwt/src');
