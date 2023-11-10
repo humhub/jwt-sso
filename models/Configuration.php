@@ -17,6 +17,11 @@ class Configuration extends Model
     public SettingsManager $settingsManager;
 
     /**
+     * @var boolean enabled state of the JWT provider
+     */
+    public $enabled;
+
+    /**
      * @var string url of the JWT provider
      */
     public $url = '';
@@ -37,6 +42,11 @@ class Configuration extends Model
     public $idAttribute = 'email';
 
     /**
+     * @var boolean enable automatic login of 'allowed ips'.
+     */
+    public $autoLogin;
+
+    /**
      * @var int token time leeway
      */
     public $leeway = 60;
@@ -46,7 +56,7 @@ class Configuration extends Model
      * Each array element represents a single IP filter which can be either an IP address
      * or an address with wildcard (e.g. 192.168.0.*) to represent a network segment.
      */
-    public $allowedIPs;
+    public $allowedIPs = [];
 
     /**
      * @inheritdoc
@@ -56,6 +66,12 @@ class Configuration extends Model
         return [
             [['url', 'sharedKey', 'supportedAlgorithms', 'leeway', 'allowedIPs'], 'safe'],
         ];
+    }
+
+    public function afterFind()
+    {
+        $this->updateState();
+        parent::afterFind();
     }
 
     public static function getAlgorithm($supportedAlgorithms) : array
@@ -99,8 +115,9 @@ class Configuration extends Model
 
     public function loadBySettings()
     {
+        $this->enabled = (boolean)$this->settingsManager->get('enabled');
         $this->url = (string)$this->settingsManager->get('url');
-        $this->sharedKey = $this->settingsManager->get('sharedKey');
+        $this->sharedKey = $this->settingsManager->getSerialized('sharedKey');
         $this->supportedAlgorithms = (array)$this->settingsManager->get('supportedAlgorithms');
         $this->idAttribute = $this->settingsManager->get('idAttribute');
         $this->leeway = $this->settingsManager->get('leeway');
@@ -112,9 +129,9 @@ class Configuration extends Model
         if (!$this->validate()) {
             return false;
         }
-
+        $this->settingsManager->set('enabled', (boolean)$this->enabled);
         $this->settingsManager->set('url', $this->url);
-        $this->settingsManager->set('sharedKey', $this->sharedKey);
+        $this->settingsManager->setSerialized('sharedKey', $this->sharedKey);
         $this->settingsManager->set('supportedAlgorithms', $this->supportedAlgorithms);
         $this->settingsManager->set('idAttribute', $this->idAttribute);
         $this->settingsManager->set('leeway', $this->leeway);
