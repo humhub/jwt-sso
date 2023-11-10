@@ -16,6 +16,10 @@ use yii\helpers\Url;
         <div class="panel-body">
             <?php $form = ActiveForm::begin(['id' => 'configure-form', 'enableClientValidation' => false, 'enableClientScript' => false]); ?>
 
+            <?= $form->field($model, 'enabled')->checkbox(); ?>
+            <?= $form->field($model, 'autoLogin')->checkbox(); ?>
+
+            </br>
             <?= $form->field($model, 'url'); ?>
             <?= $form->field($model, 'sharedKey'); ?>
             <?= $form->field($model, 'supportedAlgorithms')->radioList($model->getAlgorithms(true)); ?>
