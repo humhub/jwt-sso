@@ -64,8 +64,9 @@ class Configuration extends Model
     public function rules()
     {
         return [
-            [['url', 'sharedKey', 'supportedAlgorithms', 'leeway', 'allowedIPs'], 'safe'],
-            [['enabled'], 'boolean']
+            [['url', 'sharedKey', 'supportedAlgorithms', 'allowedIPs', 'leeway'], 'safe'],
+            [['enabled', 'autoLogin'], 'boolean'],
+            [['idAttribute'], 'string']
         ];
     }
 
@@ -120,10 +121,10 @@ class Configuration extends Model
         $this->url = (string)$this->settingsManager->get('url');
         $this->sharedKey = $this->settingsManager->getSerialized('sharedKey');
         $this->supportedAlgorithms = (array)$this->settingsManager->get('supportedAlgorithms');
-        $this->idAttribute = $this->settingsManager->get('idAttribute');
+        $this->idAttribute = (string)$this->settingsManager->get('idAttribute');
         $this->leeway = $this->settingsManager->get('leeway');
         $this->allowedIPs = $this->settingsManager->get('allowedIPs');
-        $this->autoLogin = $this->settingsManager->get('autoLogin');
+        $this->autoLogin = (boolean)$this->settingsManager->get('autoLogin');
     }
 
     public function save()
