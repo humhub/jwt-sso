@@ -65,6 +65,7 @@ class Configuration extends Model
     {
         return [
             [['url', 'sharedKey', 'supportedAlgorithms', 'leeway', 'allowedIPs'], 'safe'],
+            [['enabled'], 'boolean']
         ];
     }
 
@@ -122,6 +123,7 @@ class Configuration extends Model
         $this->idAttribute = $this->settingsManager->get('idAttribute');
         $this->leeway = $this->settingsManager->get('leeway');
         $this->allowedIPs = $this->settingsManager->get('allowedIPs');
+        $this->autoLogin = $this->settingsManager->get('autoLogin');
     }
 
     public function save()
@@ -136,6 +138,7 @@ class Configuration extends Model
         $this->settingsManager->set('idAttribute', $this->idAttribute);
         $this->settingsManager->set('leeway', $this->leeway);
         $this->settingsManager->set('allowedIPs', $this->allowedIPs);
+        $this->settingsManager->set('autoLogin', $this->autoLogin);
 
         return true;
     }
