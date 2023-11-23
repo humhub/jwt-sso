@@ -78,7 +78,7 @@ class Configuration extends Model
 
     public static function getAlgorithm($supportedAlgorithms) : array
     {
-        return self::getModes()[$supportedAlgorithms];
+        return self::getAlgorithms()[$supportedAlgorithms];
     }
 
     /**
