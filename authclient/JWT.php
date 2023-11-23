@@ -76,7 +76,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
         if (!Yii::$app->user->isGuest) {
             Yii::$app->user->logout();
         }
-        
+
         if ($token == '') {
             return $this->redirectToBroker();
         }
@@ -89,7 +89,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
             return Yii::$app->getResponse()->redirect(['/user/auth/login']);
         }
 
-        $this->setUserAttributes((array) $decodedJWT);
+        $this->setUserAttributes((array)$decodedJWT);
         $this->autoStoreAuthClient();
 
 
@@ -157,11 +157,22 @@ class JWT extends BaseClient implements StandaloneAuthClient
      */
     protected function autoStoreAuthClient()
     {
-        $attributes = $this->getUserAttributes();
-        $user = User::findOne(['email' => $attributes['email']]);
-        if ($user !== null) {
+        if ($this->getUserByAttributes() !== null) {
             (new AuthClientUserService($user))->add($this);
         }
+    }
+
+    /**
+     * @return User|null
+     */
+    protected function getUserByAttributes()
+    {
+        $attributes = $this->getUserAttributes();
+        if (isset($attributes['email'])) {
+            return User::findOne(['email' => $attributes['email']]);
+        }
+
+        return null;
     }
 
     public function checkIPAccess()

@@ -1,6 +1,11 @@
 Changelog
 =========
 
+1.1.2 (November 23, 2023)
+-------------------------
+
+- Enh: Fixed Login Issue with `JWTPrimary` AuthClient
+
 1.1.1 (June 14, 2023)
 --------------------
 
