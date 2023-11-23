@@ -12,8 +12,7 @@ class JWTPrimary extends JWT implements PrimaryClient, AutoSyncUsers, SyncAttrib
 
     public function getUser()
     {
-        // Not supported
-        return null;
+        return $this->getUserByAttributes();
     }
 
     /**

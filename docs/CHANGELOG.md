@@ -1,10 +1,15 @@
 Changelog
 =========
 
-1.1.2 (TBA)
+1.1.4 (TBA)
 --------------------
 
 - Enh: Configuration Settings
+
+1.1.3 (November 23, 2023)
+-------------------------
+
+- Enh: Fixed Login Issue with `JWTPrimary` AuthClient
 
 1.1.1 (June 14, 2023)
 --------------------
