@@ -157,7 +157,8 @@ class JWT extends BaseClient implements StandaloneAuthClient
      */
     protected function autoStoreAuthClient()
     {
-        if ($this->getUserByAttributes() !== null) {
+        $user = $this->getUserByAttributes();
+        if ($user !== null) {
             (new AuthClientUserService($user))->add($this);
         }
     }
