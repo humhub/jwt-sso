@@ -14,7 +14,7 @@ class Configuration extends Model
     const HS512 = 'HS512';
     const RS256 = 'RS256';
 
-    public SettingsManager $settingsManager;
+    public ?SettingsManager $settingsManager = null;
 
     /**
      * @var boolean enabled state of the JWT provider
@@ -117,14 +117,17 @@ class Configuration extends Model
 
     public function loadBySettings()
     {
-        $this->enabled = (boolean)$this->settingsManager->get('enabled');
-        $this->url = (string)$this->settingsManager->get('url');
-        $this->sharedKey = $this->settingsManager->getSerialized('sharedKey');
-        $this->supportedAlgorithms = (array)$this->settingsManager->get('supportedAlgorithms');
-        $this->idAttribute = (string)$this->settingsManager->get('idAttribute');
-        $this->leeway = $this->settingsManager->get('leeway');
-        $this->allowedIPs = $this->settingsManager->get('allowedIPs');
-        $this->autoLogin = (boolean)$this->settingsManager->get('autoLogin');
+        if ($this->settingsManager !== null) {
+            $this->enabled = (bool)$this->settingsManager->get('enabled') ?? true;
+            $this->url = (string)($this->settingsManager->get('url') ?? '');
+            $this->sharedKey = $this->settingsManager->getSerialized('sharedKey') ?? [];
+            $this->supportedAlgorithms = (array)($this->settingsManager->get('supportedAlgorithms') ?? []);
+            $this->idAttribute = (string)($this->settingsManager->get('idAttribute') ?? '');
+            $this->leeway = $this->settingsManager->get('leeway') ?? 0;
+            $this->allowedIPs = $this->settingsManager->get('allowedIPs') ?? [];
+            $this->autoLogin = (bool)$this->settingsManager->get('autoLogin') ?? false;
+
+        }
     }
 
     public function save()
@@ -132,7 +135,8 @@ class Configuration extends Model
         if (!$this->validate()) {
             return false;
         }
-        $this->settingsManager->set('enabled', (boolean)$this->enabled);
+
+        $this->settingsManager->set('enabled', $this->enabled);
         $this->settingsManager->set('url', $this->url);
         $this->settingsManager->setSerialized('sharedKey', $this->sharedKey);
         $this->settingsManager->set('supportedAlgorithms', $this->supportedAlgorithms);
