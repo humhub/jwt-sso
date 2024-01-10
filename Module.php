@@ -65,7 +65,7 @@ class Module extends \humhub\components\Module
             ]);
         }
 
-        if (!isset(Yii::$app->authClientCollection)) {
+        if (!isset(Yii::$app->authClientCollection) && Yii::$app->authClientCollection->hasClient('jwt')) {
             $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
 
             if ($jwtAuth->checkIPAccess()) {
