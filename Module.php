@@ -8,6 +8,7 @@
 namespace humhub\modules\sso\jwt;
 
 use humhub\modules\sso\jwt\models\Configuration;
+use humhub\modules\user\authclient\Collection;
 use humhub\components\Event;
 use Yii;
 use yii\helpers\Url;
@@ -64,13 +65,15 @@ class Module extends \humhub\components\Module
             ]);
         }
 
-        if (Yii::$app->authClientCollection->hasClient('jwt')) {
+        if (!isset(Yii::$app->authClientCollection)) {
             $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
 
             if ($jwtAuth->checkIPAccess()) {
-                if ($jwtAuth->autoLogin && $event->action->id == 'login' && empty(Yii::$app->request->get('noJwt'))) {
-                    $event->isValid = false;
-                    return $jwtAuth->redirectToBroker();
+                if ($jwtAuth->autoLogin && $event->action->id === 'login' && empty(Yii::$app->request->get('noJwt'))) {
+                    if ($event->isValid) {
+                        $event->isValid = false;
+                        return $jwtAuth->redirectToBroker();
+                    }
                 }
             } else {
                 // Not allowed, remove authClient
