@@ -37,48 +37,56 @@ class Module extends \humhub\components\Module
     }
 
     /**
-     * JWT Handling on login page
+     * JWT Handling on login page.
      *
-     * @param Event $event
+     * @param Event $event The event triggering this method.
      * @return void
-     * @throws \yii\base\InvalidConfigException
+     * @throws \yii\base\InvalidConfigException If there are configuration issues.
+     * @throws \yii\base\InvalidParamException If parameters are invalid.
+     * @throws \yii\web\ServerErrorHttpException If a server error occurs.
      * @since 1.1
      */
     public static function onAuthClientCollectionInit($event)
     {
-        if (!Yii::$app->user->isGuest) {
-            return;
-        }
-
-        /** @var Collection $authClientCollection */
-        $authClientCollection = $event->sender;
-
-        if (!empty(Configuration::getInstance()->enabled)) {
-            $authClientCollection->setClient('jwt', [
-                'class' => authclient\JWT::class,
-                'url' => Configuration::getInstance()->url,
-                'sharedKey' => Configuration::getInstance()->sharedKey,
-                'supportedAlgorithms' => Configuration::getInstance()->supportedAlgorithms,
-                'idAttribute' => Configuration::getInstance()->idAttribute,
-                'leeway' => Configuration::getInstance()->leeway,
-                'allowedIPs' => Configuration::getInstance()->allowedIPs
-            ]);
-        }
-
-        if (!isset(Yii::$app->authClientCollection) && Yii::$app->authClientCollection->hasClient('jwt')) {
-            $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
-
-            if ($jwtAuth->checkIPAccess()) {
-                if ($jwtAuth->autoLogin && $event->action->id === 'login' && empty(Yii::$app->request->get('noJwt'))) {
-                    if ($event->isValid) {
-                        $event->isValid = false;
-                        return $jwtAuth->redirectToBroker();
-                    }
-                }
-            } else {
-                // Not allowed, remove authClient
-                Yii::$app->authClientCollection->removeClient('jwt');
+        try {
+            if (!Yii::$app->user->isGuest) {
+                return;
             }
+
+            /** @var Collection $authClientCollection */
+            $authClientCollection = $event->sender;
+
+            $config = Configuration::getInstance();
+
+            if (!empty($config->enabled)) {
+                $authClientCollection->setClient('jwt', [
+                    'class' => authclient\JWT::class,
+                    'url' => $config->url,
+                    'sharedKey' => $config->sharedKey,
+                    'supportedAlgorithms' => $config->supportedAlgorithms,
+                    'idAttribute' => $config->idAttribute,
+                    'leeway' => $config->leeway,
+                    'allowedIPs' => $config->allowedIPs
+                ]);
+            }
+
+            if (isset(Yii::$app->authClientCollection) && Yii::$app->authClientCollection->hasClient('jwt')) {
+                $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
+
+                if ($jwtAuth->checkIPAccess()) {
+                    if ($jwtAuth->autoLogin && $event->action->id === 'login' && empty(Yii::$app->request->get('noJwt'))) {
+                        if ($event->isValid) {
+                            $event->isValid = false;
+                            return $jwtAuth->redirectToBroker();
+                        }
+                    }
+                } else {
+                    Yii::$app->authClientCollection->removeClient('jwt');
+                }
+            }
+        } catch (\Exception $e) {
+            // Log or handle the exception as needed
+            Yii::error('Error occurred: ' . $e->getMessage());
         }
     }
 }
