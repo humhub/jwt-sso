@@ -10,6 +10,7 @@ namespace humhub\modules\sso\jwt;
 
 use humhub\modules\sso\jwt\authclient\JWT;
 use humhub\modules\user\authclient\Collection;
+use humhub\modules\sso\jwt\models\Configuration;
 use humhub\components\Event;
 use Yii;
 
