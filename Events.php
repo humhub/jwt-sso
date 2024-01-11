@@ -34,23 +34,6 @@ class Events
                 return;
             }
 
-            /** @var Collection $authClientCollection */
-            $authClientCollection = $event->sender;
-
-            $config = Configuration::getInstance();
-
-            if (!empty($config->enabled)) {
-                $authClientCollection->setClient('jwt', [
-                    'class' => authclient\JWT::class,
-                    'url' => $config->url,
-                    'sharedKey' => $config->sharedKey,
-                    'supportedAlgorithms' => $config->supportedAlgorithms,
-                    'idAttribute' => $config->idAttribute,
-                    'leeway' => $config->leeway,
-                    'allowedIPs' => $config->allowedIPs
-                ]);
-            }
-
             if (isset(Yii::$app->authClientCollection) && Yii::$app->authClientCollection->hasClient('jwt')) {
                 $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
 
@@ -71,4 +54,28 @@ class Events
         }
     }
 
+    /**
+     * @param Event $event
+     */
+    public static function onCollectionAfterClientsSet($event)
+    {
+        /** @var Collection $authClientCollection */
+        $authClientCollection = $event->sender;
+
+        if (!($authClientCollection instanceof Collection)) {
+            return;
+        }
+
+        if (!empty(Configuration::getInstance()->enabled)) {
+            $authClientCollection->setClient('twitter', [
+                'class' => authclient\JWT::class,
+                'url' => $config->url,
+                'sharedKey' => $config->sharedKey,
+                'supportedAlgorithms' => $config->supportedAlgorithms,
+                'idAttribute' => $config->idAttribute,
+                'leeway' => $config->leeway,
+                'allowedIPs' => $config->allowedIPs
+            ]);
+        }
+    }
 }
