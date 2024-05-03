@@ -110,9 +110,9 @@ class JWT extends BaseClient implements StandaloneAuthClient
             if ($this->idAttribute == 'email' && isset($userAttributes['email'])) {
                 $userAttributes['id'] = $userAttributes['email'];
             } else if ($this->idAttribute == 'guid' && isset($userAttributes['guid'])) {
-                $userAttributes['guid'] = $userAttributes['guid'];
+                $userAttributes['id'] = $userAttributes['guid'];
             } else if ($this->idAttribute == 'username' && isset($userAttributes['username'])) {
-                $userAttributes['username'] = $userAttributes['username'];
+                $userAttributes['id'] = $userAttributes['username'];
             }
         }
 
@@ -169,8 +169,15 @@ class JWT extends BaseClient implements StandaloneAuthClient
     protected function getUserByAttributes()
     {
         $attributes = $this->getUserAttributes();
+        YII::warning('authclient::JWT::getUserByAttributes with attributes: '. json_encode($attributes));
         if (isset($attributes['email'])) {
             return User::findOne(['email' => $attributes['email']]);
+        } else if(isset($attributes['username'])) {
+            return User::findOne(['username' => $attributes['username']]);
+        } else if(isset($attributes['id'])) {
+            return User::findOne(['id' => $attributes['id']]);
+        } else if(isset($attributes['guid'])) {
+            return User::findByGuid($attributes['guid']);
         }
 
         return null;
