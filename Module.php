@@ -9,12 +9,9 @@ namespace humhub\modules\sso\jwt;
 
 use humhub\components\Event;
 use Yii;
-use yii\helpers\Url;
 
 class Module extends \humhub\components\Module
 {
-    public $resourcesPath = 'resources';
-
     /**
      * JWT Handling on login page
      *
