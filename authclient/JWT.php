@@ -169,7 +169,6 @@ class JWT extends BaseClient implements StandaloneAuthClient
     protected function getUserByAttributes()
     {
         $attributes = $this->getUserAttributes();
-        YII::warning('authclient::JWT::getUserByAttributes with attributes: '. json_encode($attributes));
         if (isset($attributes['email'])) {
             return User::findOne(['email' => $attributes['email']]);
         } else if(isset($attributes['username'])) {
