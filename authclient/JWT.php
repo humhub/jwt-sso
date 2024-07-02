@@ -33,7 +33,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
     /**
      * @var array a list of supported jwt verification algorithms Supported algorithms are 'HS256', 'HS384', 'HS512' and 'RS256'
      */
-    public $supportedAlgorithms = ['HS256'];
+    public $supportedAlgorithms = array(['HS256']);
 
     /**
      * @var string attribute to match user tables with (email, username, id, guid)
