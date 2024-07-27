@@ -20,7 +20,6 @@ use humhub\modules\sso\jwt\models\Configuration;
  */
 class JWT extends BaseClient implements StandaloneAuthClient
 {
-
     /**
      * @var string url of the JWT provider
      */
@@ -70,7 +69,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
         $this->supportedAlgorithms = $config->supportedAlgorithms;
         $this->idAttribute = $config->idAttribute;
         $this->leeway = $config->leeway;
-        $this->allowedIPs = $config->idAttribute;
+        $this->allowedIPs = $config->allowedIPs;
         $this->autoLogin = $config->autoLogin;
 
         parent::init();
@@ -96,13 +95,13 @@ class JWT extends BaseClient implements StandaloneAuthClient
             \Firebase\JWT\JWT::$leeway = $this->leeway;
             $decodedJWT = \Firebase\JWT\JWT::decode($token, $this->sharedKey, $this->supportedAlgorithms);
         } catch (\Exception $ex) {
+            Yii::error("JWT decode error: " . $ex->getMessage(), 'jwt-auth');
             Yii::$app->session->setFlash('error', Yii::t('JwtSsoModule.jwt', $ex->getMessage()));
             return Yii::$app->getResponse()->redirect(['/user/auth/login']);
         }
 
         $this->setUserAttributes((array)$decodedJWT);
         $this->autoStoreAuthClient();
-
 
         return $authAction->authSuccess($this);
     }
@@ -120,16 +119,22 @@ class JWT extends BaseClient implements StandaloneAuthClient
         if (!isset($userAttributes['id'])) {
             if ($this->idAttribute == 'email' && isset($userAttributes['email'])) {
                 $userAttributes['id'] = $userAttributes['email'];
-            } else if ($this->idAttribute == 'guid' && isset($userAttributes['guid'])) {
-                $userAttributes['guid'] = $userAttributes['guid'];
-            } else if ($this->idAttribute == 'username' && isset($userAttributes['username'])) {
-                $userAttributes['username'] = $userAttributes['username'];
+            } elseif ($this->idAttribute == 'guid' && isset($userAttributes['guid'])) {
+                $userAttributes['id'] = $userAttributes['guid'];
+            } elseif ($this->idAttribute == 'username' && isset($userAttributes['username'])) {
+                $userAttributes['id'] = $userAttributes['username'];
+            } else {
+                Yii::warning("Unable to set user ID attribute. idAttribute: {$this->idAttribute}", 'jwt-auth');
             }
         }
 
         return parent::setUserAttributes($userAttributes);
     }
 
+    /**
+     * Redirects the user to the JWT broker
+     * @return \yii\web\Response the response object
+     */
     public function redirectToBroker()
     {
         return Yii::$app->getResponse()->redirect($this->url);
@@ -171,6 +176,8 @@ class JWT extends BaseClient implements StandaloneAuthClient
         $user = $this->getUserByAttributes();
         if ($user !== null) {
             (new AuthClientUserService($user))->add($this);
+        } else {
+            Yii::warning("No user found for auto-storing auth client", 'jwt-auth');
         }
     }
 
@@ -184,9 +191,14 @@ class JWT extends BaseClient implements StandaloneAuthClient
             return User::findOne(['email' => $attributes['email']]);
         }
 
+        Yii::warning("No email found in user attributes", 'jwt-auth');
         return null;
     }
 
+    /**
+     * Checks if the current IP is allowed to use JWT
+     * @return bool whether the current IP is allowed
+     */
     public function checkIPAccess()
     {
         if (empty($this->allowedIPs)) {
@@ -199,7 +211,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
                 return true;
             }
         }
+        Yii::warning("IP access denied for: " . $ip, 'jwt-auth');
         return false;
     }
-
 }
