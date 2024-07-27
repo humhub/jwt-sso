@@ -16,7 +16,6 @@ use Yii;
 
 class Events
 {
-
     /**
      * JWT Handling on login page.
      *
@@ -30,27 +29,27 @@ class Events
     public static function onAuthClientCollectionInit($event)
     {
         try {
-            if (!Yii::$app->user->isGuest) {
-                return;
-            }
+            if (Yii::$app->user->isGuest && 
+                isset(Yii::$app->authClientCollection) && 
+                Yii::$app->authClientCollection->hasClient('jwt')) {
 
-            if (isset(Yii::$app->authClientCollection) && Yii::$app->authClientCollection->hasClient('jwt')) {
                 $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
 
                 if ($jwtAuth->checkIPAccess()) {
-                    if ($jwtAuth->autoLogin && $event->action->id === 'login' && empty(Yii::$app->request->get('noJwt'))) {
-                        if ($event->isValid) {
-                            $event->isValid = false;
-                            return $jwtAuth->redirectToBroker();
-                        }
+                    if ($jwtAuth->autoLogin && 
+                        $event->action->id === 'login' && 
+                        empty(Yii::$app->request->get('noJwt'))) {
+
+                        $event->isValid = false;
+                        Yii::$app->response->redirect($jwtAuth->redirectToBroker());
+                        Yii::$app->end();
                     }
                 } else {
                     Yii::$app->authClientCollection->removeClient('jwt');
                 }
             }
         } catch (\Exception $e) {
-            // Log or handle the exception as needed
-            Yii::error('Error occurred: ' . $e->getMessage());
+            Yii::error('JWT Auth Error: ' . $e->getMessage(), 'jwt-auth');
         }
     }
 
@@ -61,14 +60,14 @@ class Events
     {
         /** @var Collection $authClientCollection */
         $authClientCollection = $event->sender;
-
         if (!($authClientCollection instanceof Collection)) {
             return;
         }
 
-        if (!empty(Configuration::getInstance()->enabled)) {
-            $authClientCollection->setClient('twitter', [
-                'class' => authclient\JWT::class,
+        $config = Configuration::getInstance();
+        if (!empty($config->enabled)) {
+            $authClientCollection->setClient('jwt', [
+                'class' => JWT::class,
                 'url' => $config->url,
                 'sharedKey' => $config->sharedKey,
                 'supportedAlgorithms' => $config->supportedAlgorithms,
