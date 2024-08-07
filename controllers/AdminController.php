@@ -22,7 +22,7 @@ class AdminController extends Controller
             return $this->redirect(['index']);
         }
 
-        return $this->render('index', ['model' => $model,]);
+        return $this->render('index', ['model' => $model]);
     }
 
 }
