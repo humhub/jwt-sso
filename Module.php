@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @link https://www.humhub.org/
  * @copyright Copyright (c) 2019 HumHub GmbH & Co. KG
@@ -7,40 +8,30 @@
 
 namespace humhub\modules\sso\jwt;
 
-use humhub\components\Event;
-use Yii;
+use humhub\modules\sso\jwt\models\Configuration;
 use yii\helpers\Url;
+use Yii;
 
 class Module extends \humhub\components\Module
 {
     public $resourcesPath = 'resources';
 
     /**
-     * JWT Handling on login page
-     *
-     * @param Event $event
-     * @return void
-     * @throws \yii\base\InvalidConfigException
-     * @since 1.1
+     * @inheritdoc
      */
-    public static function onAuthClientCollectionInit($event)
+    public function getConfigUrl()
     {
-        if (!Yii::$app->user->isGuest) {
-            return;
-        }
+        return Url::to(['/jwt-sso/admin/index']);
+    }
 
-        if (Yii::$app->authClientCollection->hasClient('jwt')) {
-            $jwtAuth = Yii::$app->authClientCollection->getClient('jwt');
+    private ?Configuration $configuration = null;
 
-            if ($jwtAuth->checkIPAccess()) {
-                if ($jwtAuth->autoLogin && $event->action->id == 'login' && empty(Yii::$app->request->get('noJwt'))) {
-                    $event->isValid = false;
-                    return $jwtAuth->redirectToBroker();
-                }
-            } else {
-                // Not allowed, remove authClient
-                Yii::$app->authClientCollection->removeClient('jwt');
-            }
+    public function getConfiguration(): Configuration
+    {
+        if ($this->configuration === null) {
+            $this->configuration = new Configuration(['settingsManager' => $this->settings]);
+            $this->configuration->loadBySettings();
         }
+        return $this->configuration;
     }
 }
