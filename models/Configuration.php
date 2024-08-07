@@ -34,7 +34,7 @@ class Configuration extends Model
     /**
      * @var array a list of supported jwt verification algorithms Supported algorithms are 'HS256', 'HS384', 'HS512' and 'RS256'
      */
-    public $supportedAlgorithms;
+    public $supportedAlgorithms = [];
 
     /**
      * @var string attribute to match user tables with (email, username, id, guid)
@@ -120,13 +120,12 @@ class Configuration extends Model
         if ($this->settingsManager !== null) {
             $this->enabled = (bool)$this->settingsManager->get('enabled') ?? true;
             $this->url = (string)($this->settingsManager->get('url') ?? '');
-            $this->sharedKey = $this->settingsManager->getSerialized('sharedKey') ?? [];
+            $this->sharedKey = $this->settingsManager->getSerialized('sharedKey') ?? '';
             $this->supportedAlgorithms = (array)($this->settingsManager->get('supportedAlgorithms') ?? []);
             $this->idAttribute = (string)($this->settingsManager->get('idAttribute') ?? '');
             $this->leeway = $this->settingsManager->get('leeway') ?? 0;
-            $this->allowedIPs = $this->settingsManager->get('allowedIPs') ?? [];
+            $this->allowedIPs = (array)($this->settingsManager->get('allowedIPs') ?? []);
             $this->autoLogin = (bool)$this->settingsManager->get('autoLogin') ?? false;
-
         }
     }
 
@@ -138,11 +137,11 @@ class Configuration extends Model
 
         $this->settingsManager->set('enabled', $this->enabled);
         $this->settingsManager->set('url', $this->url);
-        $this->settingsManager->setSerialized('sharedKey', $this->sharedKey);
-        $this->settingsManager->set('supportedAlgorithms', $this->supportedAlgorithms);
+        $this->settingsManager->setSerialized('sharedKey', (string)$this->sharedKey);
+        $this->settingsManager->set('supportedAlgorithms', (array)$this->supportedAlgorithms);
         $this->settingsManager->set('idAttribute', $this->idAttribute);
         $this->settingsManager->set('leeway', $this->leeway);
-        $this->settingsManager->set('allowedIPs', $this->allowedIPs);
+        $this->settingsManager->set('allowedIPs', (array)$this->allowedIPs);
         $this->settingsManager->set('autoLogin', $this->autoLogin);
 
         return true;
