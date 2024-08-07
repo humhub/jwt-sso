@@ -11,7 +11,8 @@ use yii\helpers\Url;
 <div class="container-fluid">
     <div class="panel panel-default">
         <div class="panel-heading">
-            <?= Yii::t('JwtSsoModule.base', '<strong>JWT</strong> SSO configuration') ?></div>
+            <?= Yii::t('JwtSsoModule.base', '<strong>JWT</strong> SSO configuration') ?>
+        </div>
 
         <div class="panel-body">
             <?php $form = ActiveForm::begin(['id' => 'configure-form', 'enableClientValidation' => false, 'enableClientScript' => false]); ?>
@@ -19,13 +20,13 @@ use yii\helpers\Url;
             <?= $form->field($model, 'enabled')->checkbox(); ?>
             <?= $form->field($model, 'autoLogin')->checkbox(); ?>
 
-            </br>
+            <br/>
             <?= $form->field($model, 'url'); ?>
             <?= $form->field($model, 'sharedKey'); ?>
             <?= $form->field($model, 'supportedAlgorithms')->dropDownList($model->getAlgorithms(true)); ?>
             <?= $form->field($model, 'idAttribute'); ?>
             <?= $form->field($model, 'leeway'); ?>
-            <?= $form->field($model, 'allowedIPs'); ?>
+            <?= $form->field($model, 'allowedIPs')->textInput(['value' => implode(', ', $model->allowedIPs)]); ?>
             <br/>
 
             <div class="form-group">
@@ -33,7 +34,6 @@ use yii\helpers\Url;
             </div>
 
             <?php ActiveForm::end(); ?>
-
         </div>
     </div>
 </div>
