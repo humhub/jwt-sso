@@ -90,6 +90,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
         }
 
         $this->setUserAttributes((array)$decodedJWT);
+        Yii::$app->session->set('loginRememberMe', true);
         $this->autoStoreAuthClient();
 
 
