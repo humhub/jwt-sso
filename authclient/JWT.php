@@ -19,7 +19,6 @@ use humhub\modules\user\models\User;
  */
 class JWT extends BaseClient implements StandaloneAuthClient
 {
-
     /**
      * @var string url of the JWT provider
      */
@@ -53,7 +52,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
     public $allowedIPs = [];
 
     /**
-     * @var boolean enable automatic login of 'allowed ips'.
+     * @var bool enable automatic login of 'allowed ips'.
      */
     public $autoLogin = false;
 
@@ -109,9 +108,9 @@ class JWT extends BaseClient implements StandaloneAuthClient
         if (!isset($userAttributes['id'])) {
             if ($this->idAttribute == 'email' && isset($userAttributes['email'])) {
                 $userAttributes['id'] = $userAttributes['email'];
-            } else if ($this->idAttribute == 'guid' && isset($userAttributes['guid'])) {
+            } elseif ($this->idAttribute == 'guid' && isset($userAttributes['guid'])) {
                 $userAttributes['guid'] = $userAttributes['guid'];
-            } else if ($this->idAttribute == 'username' && isset($userAttributes['username'])) {
+            } elseif ($this->idAttribute == 'username' && isset($userAttributes['username'])) {
                 $userAttributes['username'] = $userAttributes['username'];
             }
         }
