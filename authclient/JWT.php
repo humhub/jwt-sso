@@ -13,6 +13,8 @@ use humhub\modules\user\services\AuthClientUserService;
 use Yii;
 use humhub\modules\user\authclient\interfaces\StandaloneAuthClient;
 use humhub\modules\user\models\User;
+use Firebase\JWT\JWT as FirebaseJWT;
+use Firebase\JWT\Key as FirebaseJWTKey;
 
 /**
  * JWT Authclient
@@ -30,9 +32,9 @@ class JWT extends BaseClient implements StandaloneAuthClient
     public $sharedKey = '';
 
     /**
-     * @var array a list of supported jwt verification algorithms Supported algorithms are 'HS256', 'HS384', 'HS512' and 'RS256'
+     * @var string jwt verification algorithm. Supported algorithms are 'HS256', 'HS384', 'HS512' and 'RS256'
      */
-    public $supportedAlgorithms = ['HS256'];
+    public $supportedAlgorithm = 'HS256';
 
     /**
      * @var string attribute to match user tables with (email, username, id, guid)
@@ -81,8 +83,8 @@ class JWT extends BaseClient implements StandaloneAuthClient
         }
 
         try {
-            \Firebase\JWT\JWT::$leeway = $this->leeway;
-            $decodedJWT = \Firebase\JWT\JWT::decode($token, $this->sharedKey, $this->supportedAlgorithms);
+            FirebaseJWT::$leeway = $this->leeway;
+            $decodedJWT = FirebaseJWT::decode($token, new FirebaseJWTKey($this->sharedKey, $this->supportedAlgorithm));
         } catch (\Exception $ex) {
             Yii::$app->session->setFlash('error', Yii::t('JwtSsoModule.jwt', $ex->getMessage()));
             return Yii::$app->getResponse()->redirect(['/user/auth/login']);
