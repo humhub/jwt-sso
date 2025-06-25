@@ -5,6 +5,7 @@ Changelog
 -------------------------
 
 - Enh: Use PHP CS Fixer
+- Fix #9: Adjust JWT client to use new JWT package version
 
 1.1.3 (November 23, 2023)
 -------------------------
