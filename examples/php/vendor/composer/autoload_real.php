@@ -8,7 +8,7 @@ class ComposerAutoloaderInitd64372594a98233948382a5750684f2f
 
     public static function loadClassLoader($class)
     {
-        if ('Composer\Autoload\ClassLoader' === $class) {
+        if (\Composer\Autoload\ClassLoader::class === $class) {
             require __DIR__ . '/ClassLoader.php';
         }
     }
@@ -19,9 +19,9 @@ class ComposerAutoloaderInitd64372594a98233948382a5750684f2f
             return self::$loader;
         }
 
-        spl_autoload_register(array('ComposerAutoloaderInitd64372594a98233948382a5750684f2f', 'loadClassLoader'), true, true);
+        spl_autoload_register(['ComposerAutoloaderInitd64372594a98233948382a5750684f2f', 'loadClassLoader'], true, true);
         self::$loader = $loader = new \Composer\Autoload\ClassLoader();
-        spl_autoload_unregister(array('ComposerAutoloaderInitd64372594a98233948382a5750684f2f', 'loadClassLoader'));
+        spl_autoload_unregister(['ComposerAutoloaderInitd64372594a98233948382a5750684f2f', 'loadClassLoader']);
 
         $useStaticLoader = PHP_VERSION_ID >= 50600 && !defined('HHVM_VERSION');
         if ($useStaticLoader) {

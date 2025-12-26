@@ -1,16 +1,16 @@
 {
-  "id": "jwt-sso",
-  "name": "JWT SSO",
-  "description": "Single Sign On using JSON Web Tokens (JWT)",
-  "keywords": [
-    "jwt",
-    "sso",
-    "login"
-  ],
-  "version": "1.1.4",
-  "humhub": {
-    "minVersion": "1.14"
-  },
-  "homepage": "https://github.com/humhub/jwt-sso",
-  "screenshots": []
+    "id": "jwt-sso",
+    "name": "JWT SSO",
+    "description": "Single Sign On using JSON Web Tokens (JWT)",
+    "keywords": [
+        "jwt",
+        "sso",
+        "login"
+    ],
+    "version": "1.1.4",
+    "humhub": {
+        "minVersion": "1.18"
+    },
+    "homepage": "https://github.com/humhub/jwt-sso",
+    "screenshots": []
 }

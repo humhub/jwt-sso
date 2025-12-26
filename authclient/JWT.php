@@ -185,7 +185,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
 
         $ip = Yii::$app->getRequest()->getUserIP();
         foreach ($this->allowedIPs as $filter) {
-            if ($filter === '*' || $filter === $ip || (($pos = strpos($filter, '*')) !== false && !strncmp($ip, $filter, $pos))) {
+            if ($filter === '*' || $filter === $ip || (($pos = strpos((string) $filter, '*')) !== false && !strncmp((string) $ip, (string) $filter, $pos))) {
                 return true;
             }
         }

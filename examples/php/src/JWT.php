@@ -78,7 +78,7 @@ class JWT
         if (count($tks) != 3) {
             throw new UnexpectedValueException('Wrong number of segments');
         }
-        list($headb64, $bodyb64, $cryptob64) = $tks;
+        [$headb64, $bodyb64, $cryptob64] = $tks;
         if (null === ($header = static::jsonDecode(static::urlsafeB64Decode($headb64)))) {
             throw new UnexpectedValueException('Invalid header encoding');
         }
@@ -187,10 +187,10 @@ class JWT
         if (empty(static::$supported_algs[$alg])) {
             throw new DomainException('Algorithm not supported');
         }
-        list($function, $algorithm) = static::$supported_algs[$alg];
+        [$function, $algorithm] = static::$supported_algs[$alg];
         switch ($function) {
             case 'hash_hmac':
-                return hash_hmac($algorithm, $msg, $key, true);
+                return hash_hmac((string) $algorithm, $msg, $key, true);
             case 'openssl':
                 $signature = '';
                 $success = openssl_sign($msg, $signature, $key, $algorithm);
@@ -221,7 +221,7 @@ class JWT
             throw new DomainException('Algorithm not supported');
         }
 
-        list($function, $algorithm) = static::$supported_algs[$alg];
+        [$function, $algorithm] = static::$supported_algs[$alg];
         switch ($function) {
             case 'openssl':
                 $success = openssl_verify($msg, $signature, $key, $algorithm);
@@ -233,7 +233,7 @@ class JWT
                 // no break
             case 'hash_hmac':
             default:
-                $hash = hash_hmac($algorithm, $msg, $key, true);
+                $hash = hash_hmac((string) $algorithm, $msg, $key, true);
                 if (function_exists('hash_equals')) {
                     return hash_equals($signature, $hash);
                 }
@@ -273,7 +273,7 @@ class JWT
              */
             $max_int_length = strlen((string) PHP_INT_MAX) - 1;
             $json_without_bigints = preg_replace('/:\s*(-?\d{' . $max_int_length . ',})/', ': "$1"', $input);
-            $obj = json_decode($json_without_bigints);
+            $obj = json_decode((string) $json_without_bigints);
         }
 
         if (function_exists('json_last_error') && $errno = json_last_error()) {
@@ -348,9 +348,7 @@ class JWT
             JSON_ERROR_SYNTAX => 'Syntax error, malformed JSON',
         ];
         throw new DomainException(
-            isset($messages[$errno])
-            ? $messages[$errno]
-            : 'Unknown JSON error: ' . $errno,
+            $messages[$errno] ?? 'Unknown JSON error: ' . $errno,
         );
     }
 
@@ -364,8 +362,8 @@ class JWT
     private static function safeStrlen($str)
     {
         if (function_exists('mb_strlen')) {
-            return mb_strlen($str, '8bit');
+            return mb_strlen((string) $str, '8bit');
         }
-        return strlen($str);
+        return strlen((string) $str);
     }
 }
