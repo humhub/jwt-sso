@@ -8,18 +8,17 @@
 
 namespace humhub\modules\sso\jwt\authclient;
 
-use humhub\modules\user\authclient\BaseClient;
 use humhub\modules\user\services\AuthClientUserService;
 use Yii;
-use humhub\modules\user\authclient\interfaces\StandaloneAuthClient;
 use humhub\modules\user\models\User;
 use Firebase\JWT\JWT as FirebaseJWT;
 use Firebase\JWT\Key as FirebaseJWTKey;
+use yii\authclient\BaseClient;
 
 /**
  * JWT Authclient
  */
-class JWT extends BaseClient implements StandaloneAuthClient
+class JWT extends BaseClient
 {
     /**
      * @var string url of the JWT provider
@@ -70,7 +69,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
     /**
      * @inheritdoc
      */
-    public function authAction($authAction)
+    public function auth()
     {
         $token = Yii::$app->request->get('jwt');
 
@@ -92,9 +91,6 @@ class JWT extends BaseClient implements StandaloneAuthClient
 
         $this->setUserAttributes((array)$decodedJWT);
         $this->autoStoreAuthClient();
-
-
-        return $authAction->authSuccess($this);
     }
 
     /**

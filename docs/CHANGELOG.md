@@ -6,6 +6,8 @@ Changelog
 
 - Enh: Use PHP CS Fixer
 - Fix #9: Adjust JWT client to use new JWT package version
+- Enh: Adapted to deprecation of `StandaloneAuthClient` interface and custom `AuthAction` (core: [humhub/humhub#8127](https://github.com/humhub/humhub/pull/8127))
+- Requires HumHub 1.19+ due to removal of `StandaloneAuthClient` and custom `AuthAction`
 
 1.1.3 (November 23, 2023)
 -------------------------
