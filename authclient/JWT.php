@@ -8,18 +8,18 @@
 
 namespace humhub\modules\sso\jwt\authclient;
 
-use humhub\modules\user\authclient\BaseClient;
-use humhub\modules\user\services\AuthClientUserService;
-use Yii;
-use humhub\modules\user\authclient\interfaces\StandaloneAuthClient;
-use humhub\modules\user\models\User;
 use Firebase\JWT\JWT as FirebaseJWT;
 use Firebase\JWT\Key as FirebaseJWTKey;
+use humhub\modules\user\authclient\interfaces\CustomAuth;
+use Yii;
+use yii\authclient\BaseClient;
+use yii\web\Response;
 
 /**
- * JWT Authclient
+ * JWT AuthClient — authenticates a HumHub session from a signed JWT presented
+ * by an external broker.
  */
-class JWT extends BaseClient implements StandaloneAuthClient
+class JWT extends BaseClient implements CustomAuth
 {
     /**
      * @var string url of the JWT provider
@@ -69,8 +69,13 @@ class JWT extends BaseClient implements StandaloneAuthClient
 
     /**
      * @inheritdoc
+     *
+     * Migrated from the pre-1.19 `authAction($authAction)` (StandaloneAuthClient).
+     * Returning a `Response` short-circuits the flow (redirect to broker / login);
+     * returning `null` signals success — core's AuthAction then calls
+     * authSuccess() with the populated user attributes automatically.
      */
-    public function authAction($authAction)
+    public function handleAuthRequest(): ?Response
     {
         $token = Yii::$app->request->get('jwt');
 
@@ -91,10 +96,8 @@ class JWT extends BaseClient implements StandaloneAuthClient
         }
 
         $this->setUserAttributes((array)$decodedJWT);
-        $this->autoStoreAuthClient();
 
-
-        return $authAction->authSuccess($this);
+        return null;
     }
 
     /**
@@ -120,7 +123,7 @@ class JWT extends BaseClient implements StandaloneAuthClient
         return parent::setUserAttributes($userAttributes);
     }
 
-    public function redirectToBroker()
+    public function redirectToBroker(): Response
     {
         return Yii::$app->getResponse()->redirect($this->url);
     }
@@ -152,31 +155,6 @@ class JWT extends BaseClient implements StandaloneAuthClient
         return 'JWT SSO';
     }
 
-    /**
-     * Automatically stores this auth client to a found user.
-     * So the user doesn't needs to login and manually set this authclient
-     */
-    protected function autoStoreAuthClient()
-    {
-        $user = $this->getUserByAttributes();
-        if ($user !== null) {
-            (new AuthClientUserService($user))->add($this);
-        }
-    }
-
-    /**
-     * @return User|null
-     */
-    protected function getUserByAttributes()
-    {
-        $attributes = $this->getUserAttributes();
-        if (isset($attributes['email'])) {
-            return User::findOne(['email' => $attributes['email']]);
-        }
-
-        return null;
-    }
-
     public function checkIPAccess()
     {
         if (empty($this->allowedIPs)) {
@@ -191,5 +169,4 @@ class JWT extends BaseClient implements StandaloneAuthClient
         }
         return false;
     }
-
 }

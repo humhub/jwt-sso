@@ -17,6 +17,27 @@ class Module extends \humhub\components\Module
     public $resourcesPath = 'resources';
 
     /**
+     * Opt-in: register a dedicated `JwtUserSource` that owns users provisioned
+     * via JWT. Enables attribute sync (default: email + username) and source
+     * isolation (users get `user_source = 'jwt'`) — the post-1.19 replacement
+     * for the legacy `JWTPrimary` marker.
+     *
+     * Default is `false` to preserve the existing behaviour on upgrade: JWT
+     * users keep landing in `LocalUserSource` and admins can flip this on
+     * once they're ready for the new model.
+     *
+     * Set via `config/common.php`:
+     * ```php
+     * 'modules' => [
+     *     'jwt-sso' => ['provideUserSource' => true],
+     * ],
+     * ```
+     *
+     * @since 1.2.0
+     */
+    public bool $provideUserSource = false;
+
+    /**
      * JWT Handling on login page
      *
      * @param Event $event
