@@ -70,6 +70,19 @@ class JWT extends BaseClient implements CustomAuth
     /**
      * @inheritdoc
      *
+     * Vanilla `yii\authclient\BaseClient` declares this method abstract;
+     * the pre-1.19 `humhub\modules\user\authclient\BaseClient` returned `[]`
+     * by default. Preserve that default — actual attributes are populated
+     * by {@see handleAuthRequest()} via {@see setUserAttributes()}.
+     */
+    protected function initUserAttributes()
+    {
+        return [];
+    }
+
+    /**
+     * @inheritdoc
+     *
      * Migrated from the pre-1.19 `authAction($authAction)` (StandaloneAuthClient).
      * Returning a `Response` short-circuits the flow (redirect to broker / login);
      * returning `null` signals success — core's AuthAction then calls
