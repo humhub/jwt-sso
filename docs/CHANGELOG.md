@@ -5,6 +5,12 @@ Changelog
 -------------------------
 
 - Enh: Require core 1.19 (UserSource refactor).
+- Enh: Add Codeception unit test suite (`JwtAuthTest`, `JwtUserSourceTest`) and
+  the four shared `module-coding-standards` workflows (master / develop /
+  next / min-version) so the module runs on CI on every push and weekly
+  against all supported core branches.
+- Enh: Manual rewritten — documents `provideUserSource`, the configurable
+  `JwtUserSource` options, and the migration path from `JWTPrimary`.
 - Enh: JWT AuthClient now extends `yii\authclient\BaseClient` directly and
   implements the new `CustomAuth` interface (`handleAuthRequest(): ?Response`),
   replacing the removed `humhub\modules\user\authclient\BaseClient` and the
