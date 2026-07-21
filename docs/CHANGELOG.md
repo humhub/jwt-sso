@@ -1,8 +1,8 @@
 Changelog
 =========
 
-1.2.0 (Unreleased)
--------------------------
+1.2.0 (July 22, 2026)
+---------------------
 
 - Enh: Require core 1.19 (UserSource refactor).
 - Enh: Add Codeception unit test suite (`JwtAuthTest`, `JwtUserSourceTest`) and
