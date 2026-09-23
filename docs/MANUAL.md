@@ -22,7 +22,7 @@ return [
                     // Required: The JWT Class (do not modify)
                     'class' => 'humhub\modules\sso\jwt\authclient\JWT',
                 
-                    // Required: A shared secret key to sign the JWT token
+                    // Required: A shared secret key to sign the JWT token (at least 32 bytes for HS256, 48 for HS384, 64 for HS512)
                     'sharedKey' => 'XKqSoxWRcLVDtveMbhQ3oxgvogWT2ef3KpKLOF_gZgwTJyznr6UDi2SCWgSeaEUo5T1_bBYbR_blojv94Sr523zDQ_CzTETN4gMYyx6xU4hsF6HGnCdoFwmd9rOTY5MiIdGX1wdwP3FvpyS0bbmG17xfTtU87gySiQaJjQWq9J2SdLOu73xPej5l1k5BA2ab-taXogZi-STi1q30w0T0kU3SGJ-fYSZO5lGNI3pws313oh83Wby8IJxhS9GZjLjOHpMO7rveoUHE6cGOXm8SjuxsJTfChPl3sGhiA2Wc-cJ-uKaN37T7qQxKeZNjXFtNGTbXwOhXbtELP_ZUy66zPg',
 
                     // Required: The URL to redirect if JWT authentication is requested 
@@ -40,8 +40,9 @@ return [
                     // Optional: Leeway (seconds) for token validation
                     'leeway' => 660,
 
-                    // Optional: JWT algorithms
-                    'supportedAlgorithms' => ['HS256']
+                    // Optional: JWT signing algorithm ('HS256', 'HS384', 'HS512' or 'RS256')
+                    // Versions before 1.1.4 used 'supportedAlgorithms' => ['HS256'], which is still accepted
+                    'supportedAlgorithm' => 'HS256'
 
                     // End of JWT configuration options
                 ],
