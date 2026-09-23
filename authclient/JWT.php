@@ -59,12 +59,27 @@ class JWT extends BaseClient implements StandaloneAuthClient
     public $autoLogin = false;
 
     /**
-     * @inheritdoc
+     * Backward compatibility for the `supportedAlgorithms` config key used by versions before 1.1.4.
+     * Only the first entry is used, since tokens are now verified against a single algorithm.
+     *
+     * @param string|string[] $algorithms
+     * @deprecated since 1.1.4, use `supportedAlgorithm` instead
      */
-    public function init()
+    public function setSupportedAlgorithms($algorithms)
     {
-        parent::init();
-        Yii::setAlias('@Firebase/JWT', '@jwt-sso/vendors/php-jwt/src');
+        $algorithms = (array) $algorithms;
+        if (!empty($algorithms)) {
+            $this->supportedAlgorithm = (string) reset($algorithms);
+        }
+    }
+
+    /**
+     * @return string[]
+     * @deprecated since 1.1.4, use `supportedAlgorithm` instead
+     */
+    public function getSupportedAlgorithms()
+    {
+        return [$this->supportedAlgorithm];
     }
 
     /**

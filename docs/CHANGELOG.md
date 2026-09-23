@@ -1,6 +1,12 @@
 Changelog
 =========
 
+1.1.5 (Unreleased)
+------------------
+
+- Fix: Accept the `supportedAlgorithms` config key of versions before 1.1.4 again, which caused an `UnknownPropertyException` on the login page since 1.1.4
+- Fix: Use the `firebase/php-jwt` library shipped with the core instead of the outdated bundled copy, which caused "Algorithm not allowed" on every JWT login since 1.1.4 (note: php-jwt 7 shipped with core 1.18.6+ requires HMAC keys of at least 32 bytes for HS256, 48 for HS384 and 64 for HS512)
+
 1.1.4 (September 8, 2026)
 -------------------------
 
