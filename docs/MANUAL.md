@@ -29,9 +29,9 @@ return [
 | Option                | Type     | Default   | Description                                                                                              |
 |-----------------------|----------|-----------|----------------------------------------------------------------------------------------------------------|
 | `class`               | string   | —         | Always `humhub\modules\sso\jwt\authclient\JWT`.                                                          |
-| `sharedKey`           | string   | —         | Shared secret used to verify the JWT signature.                                                          |
+| `sharedKey`           | string   | —         | Shared secret used to verify the JWT signature. Must be at least 32 bytes for HS256, 48 for HS384 and 64 for HS512. |
 | `url`                 | string   | —         | URL of the JWT broker. Users are redirected here when no token is presented.                             |
-| `supportedAlgorithm`  | string   | `HS256`   | JWT signing algorithm. Supported: `HS256`, `HS384`, `HS512`, `RS256`.                                    |
+| `supportedAlgorithm`  | string   | `HS256`   | JWT signing algorithm. Supported: `HS256`, `HS384`, `HS512`, `RS256`. The `supportedAlgorithms` array key of versions before 1.1.4 is still accepted. |
 | `idAttribute`         | string   | `email`   | Claim used to match the HumHub user when no explicit `id` is in the payload (`email`, `username`, `guid`). |
 | `leeway`              | int      | `60`      | Clock skew tolerance (seconds) for token validation.                                                     |
 | `allowedIPs`          | array    | `[]`      | Restrict JWT access to specific IPs. Supports wildcards: `192.168.1.*`, `*`.                             |
