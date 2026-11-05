@@ -2,9 +2,11 @@
 
 namespace tests\codeception\unit;
 
+use Firebase\JWT\JWT as FirebaseJWT;
 use humhub\modules\sso\jwt\authclient\JWT;
 use tests\codeception\_support\HumHubDbTestCase;
 use Yii;
+use yii\helpers\Url;
 
 /**
  * Unit tests for {@see JWT} — attribute normalisation, JWT meta-claim
@@ -14,6 +16,11 @@ use Yii;
  */
 class JwtAuthTest extends HumHubDbTestCase
 {
+    /**
+     * The default fixtures provide the users needed to test the handling of already logged-in users.
+     */
+    protected $fixtureConfig = ['default'];
+
     private function makeJwt(array $config = []): JWT
     {
         $client = new JWT($config);
@@ -140,6 +147,131 @@ class JwtAuthTest extends HumHubDbTestCase
         $client = $this->makeJwt(['allowedIPs' => ['*']]);
 
         $this->assertTrue($client->checkIPAccess());
+    }
+
+    // ---------------------------------------------------------------------------
+    // handleAuthRequest(): session handling, IP restriction, token lifetime
+    // ---------------------------------------------------------------------------
+
+    private const KEY = 'test-shared-key-test-shared-key-test-shared-key';
+
+    private function makeToken(array $claims = [], string $key = self::KEY): string
+    {
+        return FirebaseJWT::encode($claims + ['email' => 'alice@example.org'], $key, 'HS256');
+    }
+
+    private function makeAuthClient(array $config = []): JWT
+    {
+        return $this->makeJwt($config + ['sharedKey' => self::KEY, 'url' => 'https://broker.example/']);
+    }
+
+    private function handle(JWT $client, ?string $token): ?\yii\web\Response
+    {
+        Yii::$app->request->setQueryParams($token === null ? [] : ['jwt' => $token]);
+        $_SERVER['REMOTE_ADDR'] = '10.0.0.5';
+
+        return $client->handleAuthRequest();
+    }
+
+    public function testValidTokenIsAccepted(): void
+    {
+        $client = $this->makeAuthClient();
+
+        $this->assertNull($this->handle($client, $this->makeToken(['exp' => time() + 200])));
+        $this->assertSame('alice@example.org', $client->getUserAttributes()['email']);
+    }
+
+    public function testInvalidTokensRedirectToLogin(): void
+    {
+        $client = $this->makeAuthClient();
+        $invalid = [
+            'garbage',
+            $this->makeToken(['exp' => time() - 3600]),
+            $this->makeToken(['exp' => time() + 200], 'another-key-another-key-another-key-another-key'),
+        ];
+
+        foreach ($invalid as $token) {
+            $response = $this->handle($client, $token);
+            $this->assertNotNull($response);
+            $this->assertSame(Url::to(['/user/auth/login'], true), $response->headers->get('Location'));
+        }
+    }
+
+    public function testInvalidTokenKeepsLoggedInUser(): void
+    {
+        $this->becomeUser('User1');
+        $client = $this->makeAuthClient();
+
+        foreach (['garbage', $this->makeToken(['exp' => time() - 3600])] as $token) {
+            $this->assertNotNull($this->handle($client, $token));
+            $this->assertFalse(Yii::$app->user->isGuest);
+        }
+    }
+
+    public function testMissingTokenKeepsLoggedInUser(): void
+    {
+        $this->becomeUser('User1');
+
+        $this->assertNotNull($this->handle($this->makeAuthClient(), null));
+        $this->assertFalse(Yii::$app->user->isGuest);
+    }
+
+    public function testValidTokenLogsOutCurrentUser(): void
+    {
+        $this->becomeUser('User1');
+
+        $this->assertNull($this->handle($this->makeAuthClient(), $this->makeToken(['exp' => time() + 200])));
+        $this->assertTrue(Yii::$app->user->isGuest);
+    }
+
+    public function testNotAllowedIpKeepsLoggedInUser(): void
+    {
+        $this->becomeUser('User1');
+        $client = $this->makeAuthClient(['allowedIPs' => ['192.168.1.*']]);
+
+        $response = $this->handle($client, $this->makeToken(['exp' => time() + 200]));
+
+        $this->assertNotNull($response);
+        $this->assertSame(Url::to(['/user/auth/login'], true), $response->headers->get('Location'));
+        $this->assertFalse(Yii::$app->user->isGuest);
+    }
+
+    public function testAllowedIpAcceptsToken(): void
+    {
+        $client = $this->makeAuthClient(['allowedIPs' => ['10.0.0.*']]);
+
+        $this->assertNull($this->handle($client, $this->makeToken(['exp' => time() + 200])));
+    }
+
+    public function testTokenWithoutExpIsAcceptedByDefault(): void
+    {
+        $this->assertNull($this->handle($this->makeAuthClient(), $this->makeToken()));
+    }
+
+    public function testMaxTokenAgeRejectsTokenWithoutExp(): void
+    {
+        $client = $this->makeAuthClient(['maxTokenAge' => 300]);
+
+        $response = $this->handle($client, $this->makeToken());
+
+        $this->assertNotNull($response);
+        $this->assertSame(Url::to(['/user/auth/login'], true), $response->headers->get('Location'));
+    }
+
+    public function testMaxTokenAgeRejectsTooDistantExp(): void
+    {
+        $client = $this->makeAuthClient(['maxTokenAge' => 300, 'leeway' => 60]);
+
+        $this->assertNotNull($this->handle($client, $this->makeToken(['exp' => time() + 3600])));
+        $this->assertNotNull($this->handle($client, $this->makeToken(['exp' => time() + 400])));
+    }
+
+    public function testMaxTokenAgeAcceptsExpWithinLimit(): void
+    {
+        $client = $this->makeAuthClient(['maxTokenAge' => 300, 'leeway' => 60]);
+
+        $this->assertNull($this->handle($client, $this->makeToken(['exp' => time() + 200])));
+        $this->assertNull($this->handle($client, $this->makeToken(['exp' => time() + 300])));
     }
 
     // ---------------------------------------------------------------------------

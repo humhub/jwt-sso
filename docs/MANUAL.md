@@ -32,9 +32,10 @@ return [
 | `sharedKey`           | string   | —         | Shared secret used to verify the JWT signature. Must be at least 32 bytes for HS256, 48 for HS384 and 64 for HS512. |
 | `url`                 | string   | —         | URL of the JWT broker. Users are redirected here when no token is presented.                             |
 | `supportedAlgorithm`  | string   | `HS256`   | JWT signing algorithm. Supported: `HS256`, `HS384`, `HS512`, `RS256`. The `supportedAlgorithms` array key of versions before 1.1.4 is still accepted. |
-| `idAttribute`         | string   | `email`   | Claim used to match the HumHub user when no explicit `id` is in the payload (`email`, `username`, `guid`). |
+| `idAttribute`         | string   | `email`   | Claim used as the identity (`id`) of the JWT login when no explicit `id` is in the payload. Since HumHub 1.19 an existing user is only found via a previous JWT login (`user_auth`) or by the `email` claim, so only `email` can match a user on the first login; `username` and `guid` do not set an `id` and do not match users. |
 | `leeway`              | int      | `60`      | Clock skew tolerance (seconds) for token validation.                                                     |
-| `allowedIPs`          | array    | `[]`      | Restrict JWT access to specific IPs. Supports wildcards: `192.168.1.*`, `*`.                             |
+| `maxTokenAge`         | int      | `0`       | Maximum token lifetime in seconds (since 1.2.2). If greater than `0`, tokens without an `exp` claim or with an `exp` further in the future than this value (plus `leeway`) are rejected. `0` disables the check. |
+| `allowedIPs`          | array    | `[]`      | Restrict JWT access to specific IPs (also applied to already logged-in users). Supports wildcards: `192.168.1.*`, `*`. |
 | `autoLogin`           | bool     | `false`   | When the request IP matches `allowedIPs`, redirect to the broker automatically instead of showing the login form. |
 | `title`               | string   | `JWT SSO` | Label shown on the login-page button (when `autoLogin` is off).                                          |
 
@@ -49,6 +50,7 @@ return [
     'autoLogin' => true,
     'allowedIPs' => ['192.168.69.1', '192.168.1.*'],
     'leeway' => 660,
+    'maxTokenAge' => 300,
     'supportedAlgorithm' => 'HS256',
 ],
 ```
@@ -68,8 +70,10 @@ recovering local accounts).
 
 ## JWT Token Structure
 
-The payload may carry any HumHub profile field (internal field name). Mapped
-fields are written to the user profile on every login.
+The payload may carry any HumHub profile field (internal field name). Profile
+fields are used when a new user is created. On later logins only the
+`managedAttributes` of the `JwtUserSource` (see below, default `email` and
+`username`; requires `provideUserSource`) are updated.
 
 At least one of these claims must be present so the user can be matched:
 `id`, `email`, `guid`, `username`.
@@ -78,6 +82,7 @@ At least one of these claims must be present so the user can be matched:
 {
   "iss": "example",
   "iat": 1585585174,
+  "exp": 1585585234,
   "guid": "unique.user.key",
   "username": "john.doe",
   "email": "john.doe@example.com",
@@ -89,6 +94,11 @@ At least one of these claims must be present so the user can be matched:
 
 The standard JWT meta-claims `iss`, `iat`, `jti` are stripped before mapping
 to profile fields.
+
+**Always set a short-lived `exp` claim** (e.g. 60 seconds after `iat`). The token
+is passed in the URL (browser history, proxy and server logs), and a token
+without `exp` is valid forever. Set `maxTokenAge` on the AuthClient to reject
+tokens without `exp` or with a too distant one.
 
 ## User Source (`provideUserSource`)
 
@@ -116,7 +126,10 @@ When enabled:
 
 When **disabled** (the default) JWT users keep landing in `LocalUserSource`
 and behave like locally-registered users — matching the pre-1.19 behaviour on
-upgrade.
+upgrade. In this mode the site setting "Require approval after registration"
+applies to new JWT users too: they have to be approved by an administrator.
+To create JWT users without approval, enable `provideUserSource` (the
+`JwtUserSource` does not require approval unless `approval` is set).
 
 ### Customising the `JwtUserSource`
 
@@ -140,7 +153,7 @@ upgrade.
 |---------------------|--------|-------------------------|---------------------------------------------------------------------------------------------------|
 | `title`             | string | `JWT SSO`               | Label shown in admin UI (user list, source filters).                                              |
 | `managedAttributes` | array  | `['email', 'username']` | Profile fields the broker owns. Locked for the user and overwritten on every login.               |
-| `approval`          | bool   | follows site default    | Whether new JWT users need admin approval before they can log in.                                 |
+| `approval`          | bool   | `false`                 | Whether new JWT users need admin approval before they can log in. Not taken from the site setting "Require approval after registration"; the default is no approval. |
 | `bypassApproval`    | bool   | `false`                 | Trust the JWT auth client so newly created JWT users skip approval even when `approval` is `true`.|
 
 ## Migrating from `JWTPrimary`
