@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.2.2 (Unreleased)
+------------------
+- Fix #19: Keep the session on invalid or missing JWT, apply `allowedIPs` to logged-in users, add optional `maxTokenAge`, correct the manual
+
 1.2.1 (November 4, 2026)
 ------------------------
 

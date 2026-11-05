@@ -47,6 +47,13 @@ class JWT extends BaseClient implements CustomAuth
     public $leeway = 60;
 
     /**
+     * @var int maximum allowed lifetime of a token in seconds. If greater than 0, tokens without `exp` claim or with
+     * an `exp` further in the future than this value (plus `leeway`) are rejected. Default `0`: not checked.
+     * @since 1.2.2
+     */
+    public $maxTokenAge = 0;
+
+    /**
      * @var array the list of IPs that are allowed to use JWT.
      * Each array element represents a single IP filter which can be either an IP address
      * or an address with wildcard (e.g. 192.168.0.*) to represent a network segment.
@@ -105,11 +112,13 @@ class JWT extends BaseClient implements CustomAuth
      */
     public function handleAuthRequest(): ?Response
     {
-        $token = Yii::$app->request->get('jwt');
-
-        if (!Yii::$app->user->isGuest) {
-            Yii::$app->user->logout();
+        // The IP restriction must also apply to already logged-in users, see Module::onAuthClientCollectionInit()
+        if (!$this->checkIPAccess()) {
+            Yii::$app->session->setFlash('error', Yii::t('JwtSsoModule.jwt', 'JWT login is not allowed from your IP address.'));
+            return Yii::$app->getResponse()->redirect(['/user/auth/login']);
         }
+
+        $token = Yii::$app->request->get('jwt');
 
         if ($token == '') {
             return $this->redirectToBroker();
@@ -118,9 +127,23 @@ class JWT extends BaseClient implements CustomAuth
         try {
             FirebaseJWT::$leeway = $this->leeway;
             $decodedJWT = FirebaseJWT::decode($token, new FirebaseJWTKey($this->sharedKey, $this->supportedAlgorithm));
+
+            if ($this->maxTokenAge > 0) {
+                if (!isset($decodedJWT->exp)) {
+                    throw new \UnexpectedValueException('Token has no expiration time');
+                }
+                if ($decodedJWT->exp > time() + $this->maxTokenAge + $this->leeway) {
+                    throw new \UnexpectedValueException('Token expiration time is too far in the future');
+                }
+            }
         } catch (\Exception $ex) {
             Yii::$app->session->setFlash('error', Yii::t('JwtSsoModule.jwt', $ex->getMessage()));
             return Yii::$app->getResponse()->redirect(['/user/auth/login']);
+        }
+
+        // Log out the current user only after the token has been verified, otherwise any link could end a session
+        if (!Yii::$app->user->isGuest) {
+            Yii::$app->user->logout();
         }
 
         $this->setUserAttributes((array)$decodedJWT);
