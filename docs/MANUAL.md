@@ -34,10 +34,10 @@ return [
 | `supportedAlgorithm`  | string   | `HS256`   | JWT signing algorithm. Supported: `HS256`, `HS384`, `HS512`, `RS256`. The `supportedAlgorithms` array key of versions before 1.1.4 is still accepted. |
 | `idAttribute`         | string   | `email`   | Claim used as the identity (`id`) of the JWT login when no explicit `id` is in the payload. Since HumHub 1.19 an existing user is only found via a previous JWT login (`user_auth`) or by the `email` claim, so only `email` can match a user on the first login; `username` and `guid` do not set an `id` and do not match users. |
 | `leeway`              | int      | `60`      | Clock skew tolerance (seconds) for token validation.                                                     |
-| `maxTokenAge`         | int      | `0`       | Maximum token lifetime in seconds (since 1.2.2). If greater than `0`, tokens without an `exp` claim or with an `exp` further in the future than this value (plus `leeway`) are rejected. `0` disables the check. |
+| `maxTokenAge`         | int      | `0`       | Maximum token lifetime in seconds (since 1.3.0). If greater than `0`, tokens without an `exp` claim or with an `exp` further in the future than this value (plus `leeway`) are rejected. `0` disables the check. |
 | `allowedIPs`          | array    | `[]`      | Restrict JWT access to specific IPs (also applied to already logged-in users). Supports wildcards: `192.168.1.*`, `*`. |
 | `autoLogin`           | bool     | `false`   | When the request IP matches `allowedIPs`, redirect to the broker automatically instead of showing the login form. |
-| `assignableGroupIds`  | array    | `[]`      | IDs of the groups a token may assign to a new user through its `group_id` claim (since 1.2.2). See [Group assignment](#group-assignment). |
+| `assignableGroupIds`  | array    | `[]`      | IDs of the groups a token may assign to a new user through its `group_id` claim (since 1.3.0). See [Group assignment](#group-assignment). |
 | `title`               | string   | `JWT SSO` | Label shown on the login-page button (when `autoLogin` is off).                                          |
 
 ### Full configuration example

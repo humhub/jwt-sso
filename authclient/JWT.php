@@ -53,7 +53,7 @@ class JWT extends BaseClient implements CustomAuth
     /**
      * @var int maximum allowed lifetime of a token in seconds. If greater than 0, tokens without `exp` claim or with
      * an `exp` further in the future than this value (plus `leeway`) are rejected. Default `0`: not checked.
-     * @since 1.2.2
+     * @since 1.3.0
      */
     public $maxTokenAge = 0;
 
@@ -74,7 +74,7 @@ class JWT extends BaseClient implements CustomAuth
      * The user is only added to the group named in the claim, and only when the account is created.
      * Listed groups don't need to be shown at registration. A `group_id` of an unlisted group is only accepted
      * by the registration if it is a registration group (behaviour before this option).
-     * @since 1.2.2
+     * @since 1.3.0
      */
     public $assignableGroupIds = [];
 
@@ -203,7 +203,7 @@ class JWT extends BaseClient implements CustomAuth
      * groups.
      *
      * @param mixed $groupId value of the `group_id` claim
-     * @since 1.2.2
+     * @since 1.3.0
      */
     protected function resolveAssignableGroupId($groupId): ?int
     {
@@ -238,7 +238,7 @@ class JWT extends BaseClient implements CustomAuth
      * in the registration form.
      *
      * @param ParameterEvent $event `data` holds the group ID
-     * @since 1.2.2
+     * @since 1.3.0
      */
     public static function onGetRegistrationGroups($event)
     {
@@ -258,7 +258,7 @@ class JWT extends BaseClient implements CustomAuth
      * Detaches {@see onGetRegistrationGroups()}, so the group of a token never stays a registration group
      * after the request in which the token was verified.
      *
-     * @since 1.2.2
+     * @since 1.3.0
      */
     public static function detachRegistrationGroupsHandler(): void
     {
