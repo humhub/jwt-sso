@@ -163,9 +163,9 @@ class JWT extends BaseClient implements CustomAuth
 
         // Only a token verified in this request may assign a group, see onGetRegistrationGroups()
         self::detachRegistrationGroupsHandler();
-        $groupId = $this->resolveAssignableGroupId($this->getUserAttributes()['group_id'] ?? null);
-        if ($groupId !== null) {
-            Event::on(Group::class, Group::EVENT_GET_REGISTRATION_GROUPS, [self::class, 'onGetRegistrationGroups'], $groupId);
+        $group = $this->resolveAssignableGroup($this->getUserAttributes()['group_id'] ?? null);
+        if ($group !== null) {
+            Event::on(Group::class, Group::EVENT_GET_REGISTRATION_GROUPS, [self::class, 'onGetRegistrationGroups'], $group);
             // Class-level handlers are static state: make sure it doesn't outlive this request (long-running workers)
             Yii::$app->off(Application::EVENT_AFTER_REQUEST, [self::class, 'detachRegistrationGroupsHandler']);
             Yii::$app->on(Application::EVENT_AFTER_REQUEST, [self::class, 'detachRegistrationGroupsHandler']);
@@ -198,22 +198,32 @@ class JWT extends BaseClient implements CustomAuth
     }
 
     /**
-     * Returns the ID of the group of the `group_id` claim if it is listed in {@see $assignableGroupIds} and exists,
-     * otherwise `null`. A claim of an unlisted group is left to the registration, which only accepts registration
-     * groups.
+     * Returns the group of the `group_id` claim if it is listed in {@see $assignableGroupIds}, exists and is not an
+     * administrator group, otherwise `null`. A claim of an unlisted group is left to the registration, which only
+     * accepts registration groups.
      *
      * @param mixed $groupId value of the `group_id` claim
      * @since 1.3.0
      */
-    protected function resolveAssignableGroupId($groupId): ?int
+    protected function resolveAssignableGroup($groupId): ?Group
     {
+        if ($groupId === null) {
+            return null;
+        }
+
         if (!is_int($groupId) && !(is_string($groupId) && ctype_digit($groupId))) {
+            Yii::warning('JWT: invalid group_id claim, a new user will not be added to any group.', 'jwt-sso');
             return null;
         }
 
         $groupId = (int) $groupId;
 
         if (!in_array($groupId, array_map('intval', (array) $this->assignableGroupIds), true)) {
+            // The registration silently assigns no group at all (not even the default group) for such a claim
+            $registrationGroupIds = array_map(fn(Group $group) => (int) $group->id, Group::getRegistrationGroups());
+            if (!in_array($groupId, $registrationGroupIds, true)) {
+                Yii::warning('JWT: group ' . $groupId . ' of the group_id claim is neither in assignableGroupIds nor a registration group, a new user will not be added to any group.', 'jwt-sso');
+            }
             return null;
         }
 
@@ -228,7 +238,7 @@ class JWT extends BaseClient implements CustomAuth
             return null;
         }
 
-        return $groupId;
+        return $group;
     }
 
     /**
@@ -237,21 +247,18 @@ class JWT extends BaseClient implements CustomAuth
      * its `group_id` checked against {@see $assignableGroupIds}, so the group never becomes selectable
      * in the registration form.
      *
-     * @param ParameterEvent $event `data` holds the group ID
+     * @param ParameterEvent $event `data` holds the {@see Group}
      * @since 1.3.0
      */
     public static function onGetRegistrationGroups($event)
     {
         foreach ($event->parameters['groups'] as $group) {
-            if ((int) $group->id === (int) $event->data) {
+            if ((int) $group->id === (int) $event->data->id) {
                 return;
             }
         }
 
-        $group = Group::findOne(['id' => $event->data]);
-        if ($group !== null) {
-            $event->parameters['groups'][] = $group;
-        }
+        $event->parameters['groups'][] = $event->data;
     }
 
     /**

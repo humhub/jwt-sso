@@ -13,6 +13,7 @@ use tests\codeception\_support\HumHubDbTestCase;
 use Yii;
 use yii\base\Application;
 use yii\helpers\Url;
+use yii\log\Logger;
 
 /**
  * Unit tests for {@see JWT} — attribute normalisation, JWT meta-claim
@@ -26,6 +27,17 @@ class JwtAuthTest extends HumHubDbTestCase
      * The default fixtures provide the users needed to test the handling of already logged-in users.
      */
     protected $fixtureConfig = ['default'];
+
+    private const KEY = 'test-shared-key-test-shared-key-test-shared-key';
+    private const DEFAULT_GROUP_ID = 2; // "Users", default group, shown at registration
+    private const PRIVATE_GROUP_ID = 3; // "Moderators", not shown at registration
+
+    protected function tearDown(): void
+    {
+        JWT::detachRegistrationGroupsHandler();
+        Yii::$app->off(Application::EVENT_AFTER_REQUEST, [JWT::class, 'detachRegistrationGroupsHandler']);
+        parent::tearDown();
+    }
 
     private function makeJwt(array $config = []): JWT
     {
@@ -159,8 +171,6 @@ class JwtAuthTest extends HumHubDbTestCase
     // handleAuthRequest(): session handling, IP restriction, token lifetime
     // ---------------------------------------------------------------------------
 
-    private const KEY = 'test-shared-key-test-shared-key-test-shared-key';
-
     private function makeToken(array $claims = [], string $key = self::KEY): string
     {
         return FirebaseJWT::encode($claims + ['email' => 'alice@example.org'], $key, 'HS256');
@@ -284,16 +294,6 @@ class JwtAuthTest extends HumHubDbTestCase
     // assignableGroupIds: group_id claim
     // ---------------------------------------------------------------------------
 
-    private const DEFAULT_GROUP_ID = 2; // "Users", default group, shown at registration
-    private const PRIVATE_GROUP_ID = 3; // "Moderators", not shown at registration
-
-    protected function tearDown(): void
-    {
-        JWT::detachRegistrationGroupsHandler();
-        Yii::$app->off(Application::EVENT_AFTER_REQUEST, [JWT::class, 'detachRegistrationGroupsHandler']);
-        parent::tearDown();
-    }
-
     private function registrationGroupIdsAfterToken(array $config, $groupId): array
     {
         $this->assertNull($this->handle($this->makeAuthClient($config), $this->makeToken(['group_id' => $groupId])));
@@ -406,6 +406,31 @@ class JwtAuthTest extends HumHubDbTestCase
         $user = $this->createUserFromToken(Yii::$app->userSourceCollection->getLocalUserSource(), ['group_id' => 4]);
 
         $this->assertSame([4], $this->groupIdsOf($user));
+    }
+
+    public function testNewUserWithUnlistedNonRegistrationGroupClaimGetsNoGroup(): void
+    {
+        // Core behaviour, documented in the manual: the claim prevents the default group, and the group is not accepted
+        foreach ([false, true] as $i => $showGroupSelection) {
+            Yii::$app->getModule('user')->settings->set('auth.showRegistrationUserGroup', $showGroupSelection);
+            Group::updateAll(['show_at_registration' => (int) $showGroupSelection], ['id' => self::PRIVATE_GROUP_ID]);
+
+            $user = $this->createUserFromToken(Yii::$app->userSourceCollection->getLocalUserSource(), ['group_id' => 4], 'jwtuser' . $i);
+
+            $this->assertSame([], $this->groupIdsOf($user));
+        }
+    }
+
+    public function testWarningIsLoggedForUnlistedNonRegistrationGroupClaim(): void
+    {
+        static::logInitialize();
+        $config = ['assignableGroupIds' => [self::PRIVATE_GROUP_ID]];
+
+        $this->registrationGroupIdsAfterToken($config, self::DEFAULT_GROUP_ID); // unlisted, but a registration group
+        static::assertNotLogRegex('/group_id claim/', Logger::LEVEL_WARNING, ['jwt-sso']);
+
+        $this->registrationGroupIdsAfterToken($config, 4);
+        static::assertLogRegex('/group 4 of the group_id claim/', Logger::LEVEL_WARNING, ['jwt-sso']);
     }
 
     private function createUserFromToken(UserSourceInterface $source, array $claims, string $name = 'jwtuser'): User

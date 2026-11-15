@@ -149,7 +149,8 @@ HUMHUB_CONFIG__COMPONENTS__AUTH_CLIENT_COLLECTION__CLIENTS__JWT__ASSIGNABLE_GROU
   selectable in the registration form, so they are safe to use for groups
   that self-registered users must not join.
 - A `group_id` of an unlisted group is handled as without this option: it is
-  only assigned if it is a registration group.
+  only assigned if it is a registration group. Otherwise the new user is not
+  added to **any** group, not even the default group, and a warning is logged.
 - Administrator groups cannot be assigned, even when listed.
 - When approval after registration is required, the managers of the group are
   notified of the new user.
