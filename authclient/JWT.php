@@ -10,9 +10,13 @@ namespace humhub\modules\sso\jwt\authclient;
 
 use Firebase\JWT\JWT as FirebaseJWT;
 use Firebase\JWT\Key as FirebaseJWTKey;
+use humhub\libs\ParameterEvent;
 use humhub\modules\user\authclient\interfaces\CustomAuth;
+use humhub\modules\user\models\Group;
 use Yii;
 use yii\authclient\BaseClient;
+use yii\base\Application;
+use yii\base\Event;
 use yii\web\Response;
 
 /**
@@ -49,7 +53,7 @@ class JWT extends BaseClient implements CustomAuth
     /**
      * @var int maximum allowed lifetime of a token in seconds. If greater than 0, tokens without `exp` claim or with
      * an `exp` further in the future than this value (plus `leeway`) are rejected. Default `0`: not checked.
-     * @since 1.2.2
+     * @since 1.3.0
      */
     public $maxTokenAge = 0;
 
@@ -64,6 +68,15 @@ class JWT extends BaseClient implements CustomAuth
      * @var bool enable automatic login of 'allowed ips'.
      */
     public $autoLogin = false;
+
+    /**
+     * @var int[] IDs of the groups a token may assign to a new user through its `group_id` claim.
+     * The user is only added to the group named in the claim, and only when the account is created.
+     * Listed groups don't need to be shown at registration. A `group_id` of an unlisted group is only accepted
+     * by the registration if it is a registration group (behaviour before this option).
+     * @since 1.3.0
+     */
+    public $assignableGroupIds = [];
 
     /**
      * Backward compatibility for the `supportedAlgorithms` config key used by versions before 1.1.4.
@@ -148,6 +161,16 @@ class JWT extends BaseClient implements CustomAuth
 
         $this->setUserAttributes((array)$decodedJWT);
 
+        // Only a token verified in this request may assign a group, see onGetRegistrationGroups()
+        self::detachRegistrationGroupsHandler();
+        $group = $this->resolveAssignableGroup($this->getUserAttributes()['group_id'] ?? null);
+        if ($group !== null) {
+            Event::on(Group::class, Group::EVENT_GET_REGISTRATION_GROUPS, [self::class, 'onGetRegistrationGroups'], $group);
+            // Class-level handlers are static state: make sure it doesn't outlive this request (long-running workers)
+            Yii::$app->off(Application::EVENT_AFTER_REQUEST, [self::class, 'detachRegistrationGroupsHandler']);
+            Yii::$app->on(Application::EVENT_AFTER_REQUEST, [self::class, 'detachRegistrationGroupsHandler']);
+        }
+
         return null;
     }
 
@@ -172,6 +195,82 @@ class JWT extends BaseClient implements CustomAuth
         }
 
         return parent::setUserAttributes($userAttributes);
+    }
+
+    /**
+     * Returns the group of the `group_id` claim if it is listed in {@see $assignableGroupIds}, exists and is not an
+     * administrator group, otherwise `null`. A claim of an unlisted group is left to the registration, which only
+     * accepts registration groups.
+     *
+     * @param mixed $groupId value of the `group_id` claim
+     * @since 1.3.0
+     */
+    protected function resolveAssignableGroup($groupId): ?Group
+    {
+        // Same check as the registration: an empty claim (e.g. `0` or `""`) assigns the default group
+        if (empty($groupId)) {
+            return null;
+        }
+
+        if (!is_int($groupId) && !(is_string($groupId) && ctype_digit($groupId))) {
+            Yii::warning('JWT: invalid group_id claim, a new user will not be added to any group.', 'jwt-sso');
+            return null;
+        }
+
+        $groupId = (int) $groupId;
+
+        if (!in_array($groupId, array_map('intval', (array) $this->assignableGroupIds), true)) {
+            // The registration silently assigns no group at all (not even the default group) for such a claim
+            $registrationGroupIds = array_map(fn(Group $group) => (int) $group->id, Group::getRegistrationGroups());
+            if (!in_array($groupId, $registrationGroupIds, true)) {
+                Yii::warning('JWT: group ' . $groupId . ' of the group_id claim is neither in assignableGroupIds nor a registration group, a new user will not be added to any group.', 'jwt-sso');
+            }
+            return null;
+        }
+
+        $group = Group::findOne(['id' => $groupId]);
+        if ($group === null) {
+            Yii::warning('JWT: group ' . $groupId . ' of assignableGroupIds does not exist.', 'jwt-sso');
+            return null;
+        }
+
+        if ($group->is_admin_group) {
+            Yii::warning('JWT: group ' . $groupId . ' of assignableGroupIds is an administrator group and cannot be assigned.', 'jwt-sso');
+            return null;
+        }
+
+        return $group;
+    }
+
+    /**
+     * Makes the group of the `group_id` claim a valid registration group, so the registration of the new
+     * user accepts it. Attached by {@see handleAuthRequest()} only after a token has been verified and
+     * its `group_id` checked against {@see $assignableGroupIds}, so the group never becomes selectable
+     * in the registration form.
+     *
+     * @param ParameterEvent $event `data` holds the {@see Group}
+     * @since 1.3.0
+     */
+    public static function onGetRegistrationGroups($event)
+    {
+        foreach ($event->parameters['groups'] as $group) {
+            if ((int) $group->id === (int) $event->data->id) {
+                return;
+            }
+        }
+
+        $event->parameters['groups'][] = $event->data;
+    }
+
+    /**
+     * Detaches {@see onGetRegistrationGroups()}, so the group of a token never stays a registration group
+     * after the request in which the token was verified.
+     *
+     * @since 1.3.0
+     */
+    public static function detachRegistrationGroupsHandler(): void
+    {
+        Event::off(Group::class, Group::EVENT_GET_REGISTRATION_GROUPS, [self::class, 'onGetRegistrationGroups']);
     }
 
     public function redirectToBroker(): Response

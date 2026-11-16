@@ -34,9 +34,10 @@ return [
 | `supportedAlgorithm`  | string   | `HS256`   | JWT signing algorithm. Supported: `HS256`, `HS384`, `HS512`, `RS256`. The `supportedAlgorithms` array key of versions before 1.1.4 is still accepted. |
 | `idAttribute`         | string   | `email`   | Claim used as the identity (`id`) of the JWT login when no explicit `id` is in the payload. Since HumHub 1.19 an existing user is only found via a previous JWT login (`user_auth`) or by the `email` claim, so only `email` can match a user on the first login; `username` and `guid` do not set an `id` and do not match users. |
 | `leeway`              | int      | `60`      | Clock skew tolerance (seconds) for token validation.                                                     |
-| `maxTokenAge`         | int      | `0`       | Maximum token lifetime in seconds (since 1.2.2). If greater than `0`, tokens without an `exp` claim or with an `exp` further in the future than this value (plus `leeway`) are rejected. `0` disables the check. |
+| `maxTokenAge`         | int      | `0`       | Maximum token lifetime in seconds (since 1.3.0). If greater than `0`, tokens without an `exp` claim or with an `exp` further in the future than this value (plus `leeway`) are rejected. `0` disables the check. |
 | `allowedIPs`          | array    | `[]`      | Restrict JWT access to specific IPs (also applied to already logged-in users). Supports wildcards: `192.168.1.*`, `*`. |
 | `autoLogin`           | bool     | `false`   | When the request IP matches `allowedIPs`, redirect to the broker automatically instead of showing the login form. |
+| `assignableGroupIds`  | array    | `[]`      | IDs of the groups a token may assign to a new user through its `group_id` claim (since 1.3.0). See [Group assignment](#group-assignment). |
 | `title`               | string   | `JWT SSO` | Label shown on the login-page button (when `autoLogin` is off).                                          |
 
 ### Full configuration example
@@ -99,6 +100,60 @@ to profile fields.
 is passed in the URL (browser history, proxy and server logs), and a token
 without `exp` is valid forever. Set `maxTokenAge` on the AuthClient to reject
 tokens without `exp` or with a too distant one.
+
+## Group assignment
+
+The broker can choose the group of a new user with a `group_id` claim holding
+the numeric ID of a HumHub group (shown in the address bar when editing the
+group: `…&id=5`):
+
+```json
+{
+  "exp": 1585585234,
+  "email": "john.doe@example.com",
+  "group_id": 5
+}
+```
+
+Without further configuration, HumHub only accepts the claim if the group is a
+registration group, i.e. selectable in the registration form (**Show group
+selection at registration** enabled and **Show At Registration** set on the
+group), or the default group when no group is selectable. To assign groups
+that self-registered users must not be able to choose, list them in the
+`assignableGroupIds` option of the AuthClient:
+
+```php
+'jwt' => [
+    'class' => 'humhub\modules\sso\jwt\authclient\JWT',
+    // ...
+    'assignableGroupIds' => [5, 7],
+],
+```
+
+or in the `.env` file:
+
+```env
+HUMHUB_CONFIG__COMPONENTS__AUTH_CLIENT_COLLECTION__CLIENTS__JWT__ASSIGNABLE_GROUP_IDS=[5,7]
+```
+
+- The user is added to the group of the claim only (a token with `"group_id": 7`
+  adds the user to group 7, not to group 5), instead of the default group.
+- The group is only assigned **when the account is created** automatically on
+  the first JWT login. Later logins don't change group memberships. If the
+  automatic creation fails and the user completes the registration form, the
+  group is not assigned.
+- Existing accounts are never added to the group, including accounts created
+  by self-registration or another login method that are later matched by
+  their email on a JWT login. Add these users to the group manually.
+- The listed groups don't need to be shown at registration: they never become
+  selectable in the registration form, so they are safe to use for groups
+  that self-registered users must not join.
+- A `group_id` of an unlisted group is handled as without this option: it is
+  only assigned if it is a registration group. Otherwise the new user is not
+  added to **any** group, not even the default group, and a warning is logged.
+- Administrator groups cannot be assigned, even when listed.
+- When approval after registration is required, the managers of the group are
+  notified of the new user.
 
 ## User Source (`provideUserSource`)
 

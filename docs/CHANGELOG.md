@@ -1,9 +1,10 @@
 Changelog
 =========
 
-1.2.2 (Unreleased)
+1.3.0 (Unreleased)
 ------------------
 - Fix #19: Keep the session on invalid or missing JWT, apply `allowedIPs` to logged-in users, add optional `maxTokenAge`, correct the manual
+- Enh #20: Add `assignableGroupIds` to assign new users to the group of the `group_id` claim without making it selectable at registration (only when the account is created on the first JWT login, existing accounts are not added to the group)
 
 1.2.1 (November 4, 2026)
 ------------------------
