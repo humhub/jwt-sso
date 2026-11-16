@@ -207,7 +207,8 @@ class JWT extends BaseClient implements CustomAuth
      */
     protected function resolveAssignableGroup($groupId): ?Group
     {
-        if ($groupId === null) {
+        // Same check as the registration: an empty claim (e.g. `0` or `""`) assigns the default group
+        if (empty($groupId)) {
             return null;
         }
 

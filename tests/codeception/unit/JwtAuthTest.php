@@ -429,6 +429,11 @@ class JwtAuthTest extends HumHubDbTestCase
         $this->registrationGroupIdsAfterToken($config, self::DEFAULT_GROUP_ID); // unlisted, but a registration group
         static::assertNotLogRegex('/group_id claim/', Logger::LEVEL_WARNING, ['jwt-sso']);
 
+        foreach ([0, '0', '', false] as $claim) { // empty: the registration assigns the default group
+            $this->registrationGroupIdsAfterToken($config, $claim);
+        }
+        static::assertNotLogRegex('/group_id claim/', Logger::LEVEL_WARNING, ['jwt-sso']);
+
         $this->registrationGroupIdsAfterToken($config, 4);
         static::assertLogRegex('/group 4 of the group_id claim/', Logger::LEVEL_WARNING, ['jwt-sso']);
     }
