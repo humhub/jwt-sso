@@ -1,6 +1,10 @@
 Changelog
 =========
 
+1.4.0 (Unreleased)
+------------------
+- Enh: Require HumHub 1.20, use a Tabler icon for the JWT login button
+
 1.3.0 (November 16, 2026)
 -------------------------
 - Fix #19: Keep the session on invalid or missing JWT, apply `allowedIPs` to logged-in users, add optional `maxTokenAge`, correct the manual

@@ -284,7 +284,7 @@ class JWT extends BaseClient implements CustomAuth
     protected function defaultViewOptions()
     {
         return [
-            'cssIcon' => 'fa fa-fast-forward',
+            'cssIcon' => 'ti ti-player-track-next',
             'buttonBackgroundColor' => '#4078C0',
         ];
     }
